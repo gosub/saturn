@@ -6,6 +6,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
@@ -20,6 +22,7 @@ public class MainActivity extends Activity {
 
     private static final String TAG = "Saturn";
     private static final int REQUEST_NOTIFICATIONS = 1001;
+    private static final String[] DOTS = {"\u25cf  \u25cb  \u25cb", "\u25cb  \u25cf  \u25cb", "\u25cb  \u25cb  \u25cf"};
 
     private ListView chatList;
     private EditText inputField;
@@ -31,6 +34,21 @@ public class MainActivity extends Activity {
     private SharedPreferences prefs;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
+    private ChatMessage typingMessage;
+    private int dotStep = 0;
+    private final Handler dotsHandler = new Handler(Looper.getMainLooper());
+    private final Runnable dotsRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (typingMessage != null && typingMessage.maxProgress == 0) {
+                typingMessage.content = DOTS[dotStep % 3];
+                dotStep++;
+                adapter.notifyDataSetChanged();
+                dotsHandler.postDelayed(this, 400);
+            }
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -39,9 +57,9 @@ public class MainActivity extends Activity {
         db = new Database(this);
         prefs = getSharedPreferences("saturn", MODE_PRIVATE);
 
-        chatList  = findViewById(R.id.chat_list);
+        chatList   = findViewById(R.id.chat_list);
         inputField = findViewById(R.id.input_field);
-        sendBtn   = findViewById(R.id.send_btn);
+        sendBtn    = findViewById(R.id.send_btn);
 
         adapter = new ChatAdapter(this, messages);
         chatList.setAdapter(adapter);
@@ -67,6 +85,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        dotsHandler.removeCallbacks(dotsRunnable);
         executor.shutdown();
         db.close();
     }
@@ -84,44 +103,109 @@ public class MainActivity extends Activity {
         inputField.setText("");
         setInputEnabled(false);
         addUserMessage(text);
+        showTypingIndicator();
 
         executor.execute(() -> {
-            try {
-                String model    = prefs.getString("model", "google/gemma-4-31b-it:free");
-                String timezone = prefs.getString("timezone", "");
-                String language = prefs.getString("language", "en");
-                String schedule = prefs.getString("schedule", "");
-                String histJson = prefs.getString("conversation_history", "");
+            String model    = prefs.getString("model", "google/gemma-4-31b-it:free");
+            String timezone = prefs.getString("timezone", "");
+            String language = prefs.getString("language", "en");
+            String schedule = prefs.getString("schedule", "");
+            String histJson = prefs.getString("conversation_history", "");
 
-                List<Task> tasks = db.getTasks();
-                List<AgentClient.Message> history = AgentClient.loadHistory(histJson);
-                String systemPrompt = AgentClient.buildChatPrompt(
-                    language, schedule, tasks, System.currentTimeMillis(), timezone);
+            List<AgentClient.Message> history = AgentClient.loadHistory(histJson);
+            String systemPrompt;
+            List<Task> tasks;
+            synchronized (db) {
+                tasks = db.getTasks();
+            }
+            systemPrompt = AgentClient.buildChatPrompt(
+                language, schedule, tasks, System.currentTimeMillis(), timezone);
 
-                AgentClient.AgentResponse resp = new AgentClient()
-                    .chat(apiKey, model, systemPrompt, history, text);
+            boolean done = false;
+            while (!done) {
+                try {
+                    AgentClient.AgentResponse resp = new AgentClient()
+                        .chat(apiKey, model, systemPrompt, history, text);
 
-                ActionExecutor.execute(resp.actions, db, prefs);
-                NudgeScheduler.scheduleNext(MainActivity.this, db);
+                    synchronized (db) {
+                        ActionExecutor.execute(resp.actions, db, prefs);
+                        NudgeScheduler.scheduleNext(MainActivity.this, db);
+                    }
 
-                String reply = (resp.reply != null && !resp.reply.isEmpty())
-                    ? resp.reply : "(no reply)";
+                    String reply = (resp.reply != null && !resp.reply.isEmpty())
+                        ? resp.reply : "(no reply)";
+                    String updatedHistory = AgentClient.saveHistory(history, text, resp.reply);
+                    prefs.edit().putString("conversation_history", updatedHistory).apply();
 
-                String updatedHistory = AgentClient.saveHistory(history, text, resp.reply);
-                prefs.edit().putString("conversation_history", updatedHistory).apply();
+                    runOnUiThread(() -> {
+                        hideTypingIndicator();
+                        addBotMessage(reply);
+                        setInputEnabled(true);
+                    });
+                    done = true;
 
-                runOnUiThread(() -> {
-                    addBotMessage(reply);
-                    setInputEnabled(true);
-                });
-            } catch (Exception e) {
-                Log.e(TAG, "chat error", e);
-                runOnUiThread(() -> {
-                    addBotMessage("Error: " + e.getMessage());
-                    setInputEnabled(true);
-                });
+                } catch (AgentClient.RateLimitException rle) {
+                    final int total = rle.retryAfterSeconds;
+                    for (int remaining = total; remaining >= 0; remaining--) {
+                        final int r = remaining;
+                        final int progress = ((total - r) * 100) / total;
+                        runOnUiThread(() -> {
+                            if (typingMessage != null) {
+                                typingMessage.content = r > 0 ? "Retrying in " + r + "s" : "Retrying\u2026";
+                                typingMessage.progress = progress;
+                                typingMessage.maxProgress = total;
+                                adapter.notifyDataSetChanged();
+                            }
+                        });
+                        if (remaining > 0) {
+                            try { Thread.sleep(1000); } catch (InterruptedException ie) {
+                                done = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (!done) {
+                        runOnUiThread(() -> {
+                            if (typingMessage != null) {
+                                typingMessage.content = DOTS[0];
+                                typingMessage.maxProgress = 0;
+                                dotStep = 0;
+                                adapter.notifyDataSetChanged();
+                                dotsHandler.postDelayed(dotsRunnable, 400);
+                            }
+                        });
+                    }
+
+                } catch (Exception e) {
+                    Log.e(TAG, "chat error", e);
+                    final String msg = e.getMessage();
+                    runOnUiThread(() -> {
+                        hideTypingIndicator();
+                        addBotMessage("Error: " + msg);
+                        setInputEnabled(true);
+                    });
+                    done = true;
+                }
             }
         });
+    }
+
+    private void showTypingIndicator() {
+        dotStep = 0;
+        typingMessage = new ChatMessage(ChatMessage.ROLE_TYPING, DOTS[0]);
+        messages.add(typingMessage);
+        adapter.notifyDataSetChanged();
+        chatList.smoothScrollToPosition(messages.size() - 1);
+        dotsHandler.postDelayed(dotsRunnable, 400);
+    }
+
+    private void hideTypingIndicator() {
+        dotsHandler.removeCallbacks(dotsRunnable);
+        if (typingMessage != null) {
+            messages.remove(typingMessage);
+            typingMessage = null;
+            adapter.notifyDataSetChanged();
+        }
     }
 
     private void addUserMessage(String text) {

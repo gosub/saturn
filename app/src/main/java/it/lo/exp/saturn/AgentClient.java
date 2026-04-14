@@ -52,6 +52,14 @@ public class AgentClient {
         public List<Action> actions;
     }
 
+    public static class RateLimitException extends IOException {
+        public final int retryAfterSeconds;
+        public RateLimitException(int seconds) {
+            super("rate limited, retry after " + seconds + "s");
+            this.retryAfterSeconds = seconds;
+        }
+    }
+
     private static class ChatRequest {
         String model;
         List<Message> messages;
@@ -101,6 +109,16 @@ public class AgentClient {
         StringBuilder sb = new StringBuilder();
         while (scanner.hasNextLine()) sb.append(scanner.nextLine());
         scanner.close();
+
+        if (status == 429) {
+            String retryAfter = conn.getHeaderField("Retry-After");
+            int seconds = 30;
+            if (retryAfter != null) {
+                try { seconds = Integer.parseInt(retryAfter.trim()); } catch (NumberFormatException ignored) {}
+            }
+            Log.d(TAG, "rate limited, retry after " + seconds + "s");
+            throw new RateLimitException(seconds);
+        }
 
         if (status != 200) {
             throw new IOException("API error " + status + ": " + sb);

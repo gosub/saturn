@@ -1,11 +1,14 @@
 package it.lo.exp.saturn;
 
 public class ChatMessage {
-    public static final int ROLE_USER = 0;
-    public static final int ROLE_BOT = 1;
+    public static final int ROLE_USER   = 0;
+    public static final int ROLE_BOT    = 1;
+    public static final int ROLE_TYPING = 2;
 
     public final int role;
-    public final String content;
+    public String content;
+    public int progress;    // 0-100, used when maxProgress > 0
+    public int maxProgress; // > 0 means countdown bar is visible
 
     public ChatMessage(int role, String content) {
         this.role = role;
