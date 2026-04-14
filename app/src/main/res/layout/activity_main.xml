@@ -3,14 +3,14 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#1A1A1A">
+    android:background="#ece2d0">
 
     <!-- Title bar -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:orientation="horizontal"
-        android:background="#111111"
+        android:background="#6d2e46"
         android:gravity="center_vertical"
         android:paddingStart="16dp"
         android:paddingEnd="8dp">
@@ -20,7 +20,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="@string/app_name"
-            android:textColor="#FFFFFF"
+            android:textColor="#ece2d0"
             android:textSize="22sp"
             android:textStyle="bold" />
 
@@ -30,7 +30,7 @@
             android:layout_height="wrap_content"
             android:text="&#9881;"
             android:textSize="20sp"
-            android:textColor="#AAAAAA"
+            android:textColor="#ece2d0"
             android:background="@android:color/transparent"
             android:paddingStart="12dp"
             android:paddingEnd="12dp" />
@@ -55,7 +55,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:background="#111111"
+        android:background="#6d2e46"
         android:padding="8dp"
         android:gravity="center_vertical">
 
@@ -65,8 +65,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:hint="Message"
-            android:textColor="#FFFFFF"
-            android:textColorHint="#666666"
+            android:textColor="#6d2e46"
+            android:textColorHint="#a26769"
             android:background="@drawable/input_bg"
             android:paddingStart="14dp"
             android:paddingEnd="14dp"
@@ -82,7 +82,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:text="Send"
-            android:textColor="#FFFFFF"
+            android:textColor="#ece2d0"
             android:background="@drawable/btn_send_bg"
             android:paddingStart="16dp"
             android:paddingEnd="16dp"

@@ -2,7 +2,7 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#1A1A1A">
+    android:background="#ece2d0">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -14,7 +14,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Settings"
-            android:textColor="#FFFFFF"
+            android:textColor="#6d2e46"
             android:textSize="22sp"
             android:textStyle="bold"
             android:paddingBottom="20dp" />
@@ -23,7 +23,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="OpenRouter API key"
-            android:textColor="#AAAAAA"
+            android:textColor="#a26769"
             android:textSize="13sp"
             android:paddingBottom="4dp" />
         <EditText
@@ -31,18 +31,18 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="textPassword"
-            android:textColor="#FFFFFF"
+            android:textColor="#6d2e46"
             android:background="@drawable/input_bg"
             android:padding="12dp"
             android:layout_marginBottom="16dp"
             android:hint="sk-or-..."
-            android:textColorHint="#555555" />
+            android:textColorHint="#a26769" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Model"
-            android:textColor="#AAAAAA"
+            android:textColor="#a26769"
             android:textSize="13sp"
             android:paddingBottom="4dp" />
         <EditText
@@ -50,7 +50,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="text"
-            android:textColor="#FFFFFF"
+            android:textColor="#6d2e46"
             android:background="@drawable/input_bg"
             android:padding="12dp"
             android:layout_marginBottom="16dp" />
@@ -59,7 +59,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Timezone"
-            android:textColor="#AAAAAA"
+            android:textColor="#a26769"
             android:textSize="13sp"
             android:paddingBottom="4dp" />
         <EditText
@@ -67,18 +67,18 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="text"
-            android:textColor="#FFFFFF"
+            android:textColor="#6d2e46"
             android:background="@drawable/input_bg"
             android:padding="12dp"
             android:layout_marginBottom="16dp"
             android:hint="e.g. Europe/Rome"
-            android:textColorHint="#555555" />
+            android:textColorHint="#a26769" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Language"
-            android:textColor="#AAAAAA"
+            android:textColor="#a26769"
             android:textSize="13sp"
             android:paddingBottom="4dp" />
         <Spinner
@@ -93,7 +93,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Schedule (freeform)"
-            android:textColor="#AAAAAA"
+            android:textColor="#a26769"
             android:textSize="13sp"
             android:paddingBottom="4dp" />
         <EditText
@@ -102,19 +102,19 @@
             android:layout_height="wrap_content"
             android:inputType="textMultiLine|textCapSentences"
             android:minLines="2"
-            android:textColor="#FFFFFF"
+            android:textColor="#6d2e46"
             android:background="@drawable/input_bg"
             android:padding="12dp"
             android:layout_marginBottom="24dp"
             android:hint="e.g. weekdays 9-13 and 15-19"
-            android:textColorHint="#555555" />
+            android:textColorHint="#a26769" />
 
         <Button
             android:id="@+id/save_btn"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Save"
-            android:textColor="#FFFFFF"
+            android:textColor="#6d2e46"
             android:background="@drawable/btn_send_bg"
             android:padding="14dp"
             android:layout_marginBottom="12dp" />
@@ -124,7 +124,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Clear conversation history"
-            android:textColor="#AAAAAA"
+            android:textColor="#a26769"
             android:background="@android:color/transparent"
             android:padding="10dp" />
 

@@ -14,7 +14,7 @@
         android:layout_height="wrap_content"
         android:background="@drawable/bubble_bot"
         android:padding="12dp"
-        android:textColor="#FFFFFF"
+        android:textColor="#6d2e46"
         android:textSize="15sp"
         android:lineSpacingMultiplier="1.2" />
 
