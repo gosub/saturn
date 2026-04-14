@@ -87,7 +87,7 @@ public class MainActivity extends Activity {
 
         executor.execute(() -> {
             try {
-                String model    = prefs.getString("model", "openai/gpt-4o-mini");
+                String model    = prefs.getString("model", "google/gemma-4-31b-it:free");
                 String timezone = prefs.getString("timezone", "");
                 String language = prefs.getString("language", "en");
                 String schedule = prefs.getString("schedule", "");

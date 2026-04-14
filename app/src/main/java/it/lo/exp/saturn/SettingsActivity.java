@@ -50,7 +50,7 @@ public class SettingsActivity extends Activity {
         });
 
         apiKeyField.setText(prefs.getString("api_key", ""));
-        modelField.setText(prefs.getString("model", "openai/gpt-4o-mini"));
+        modelField.setText(prefs.getString("model", "google/gemma-4-31b-it:free"));
         timezoneField.setText(prefs.getString("timezone", TimeZone.getDefault().getID()));
         scheduleField.setText(prefs.getString("schedule", ""));
 
@@ -68,7 +68,7 @@ public class SettingsActivity extends Activity {
         String timezone = timezoneField.getText().toString().trim();
         String schedule = scheduleField.getText().toString().trim();
 
-        if (model.isEmpty())    model    = "openai/gpt-4o-mini";
+        if (model.isEmpty())    model    = "google/gemma-4-31b-it:free";
         if (timezone.isEmpty()) timezone = TimeZone.getDefault().getID();
 
         prefs.edit()
