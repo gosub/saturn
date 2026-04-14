@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#1A1A1A">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Settings"
+            android:textColor="#FFFFFF"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:paddingBottom="20dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="OpenRouter API key"
+            android:textColor="#AAAAAA"
+            android:textSize="13sp"
+            android:paddingBottom="4dp" />
+        <EditText
+            android:id="@+id/field_api_key"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textPassword"
+            android:textColor="#FFFFFF"
+            android:background="@drawable/input_bg"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp"
+            android:hint="sk-or-..."
+            android:textColorHint="#555555" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Model"
+            android:textColor="#AAAAAA"
+            android:textSize="13sp"
+            android:paddingBottom="4dp" />
+        <EditText
+            android:id="@+id/field_model"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="text"
+            android:textColor="#FFFFFF"
+            android:background="@drawable/input_bg"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Timezone"
+            android:textColor="#AAAAAA"
+            android:textSize="13sp"
+            android:paddingBottom="4dp" />
+        <EditText
+            android:id="@+id/field_timezone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="text"
+            android:textColor="#FFFFFF"
+            android:background="@drawable/input_bg"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp"
+            android:hint="e.g. Europe/Rome"
+            android:textColorHint="#555555" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Language"
+            android:textColor="#AAAAAA"
+            android:textSize="13sp"
+            android:paddingBottom="4dp" />
+        <Spinner
+            android:id="@+id/spinner_language"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/input_bg"
+            android:popupBackground="#2A2A2A" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Nudge interval (minutes)"
+            android:textColor="#AAAAAA"
+            android:textSize="13sp"
+            android:paddingBottom="4dp" />
+        <EditText
+            android:id="@+id/field_nudge_interval"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:textColor="#FFFFFF"
+            android:background="@drawable/input_bg"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Schedule (freeform)"
+            android:textColor="#AAAAAA"
+            android:textSize="13sp"
+            android:paddingBottom="4dp" />
+        <EditText
+            android:id="@+id/field_schedule"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textMultiLine|textCapSentences"
+            android:minLines="2"
+            android:textColor="#FFFFFF"
+            android:background="@drawable/input_bg"
+            android:padding="12dp"
+            android:layout_marginBottom="24dp"
+            android:hint="e.g. weekdays 9-13 and 15-19"
+            android:textColorHint="#555555" />
+
+        <Button
+            android:id="@+id/save_btn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Save"
+            android:textColor="#FFFFFF"
+            android:background="@drawable/btn_send_bg"
+            android:padding="14dp"
+            android:layout_marginBottom="12dp" />
+
+        <Button
+            android:id="@+id/clear_history_btn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Clear conversation history"
+            android:textColor="#AAAAAA"
+            android:background="@android:color/transparent"
+            android:padding="10dp" />
+
+    </LinearLayout>
+</ScrollView>
