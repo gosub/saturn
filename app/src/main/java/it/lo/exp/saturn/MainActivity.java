@@ -106,6 +106,7 @@ public class MainActivity extends Activity {
         showTypingIndicator();
 
         executor.execute(() -> {
+            Log.d(TAG, "chat: user=\"" + text + "\"");
             String model    = prefs.getString("model", "google/gemma-4-31b-it:free");
             String timezone = prefs.getString("timezone", "");
             String language = prefs.getString("language", "en");
@@ -134,6 +135,7 @@ public class MainActivity extends Activity {
 
                     String reply = (resp.reply != null && !resp.reply.isEmpty())
                         ? resp.reply : "(no reply)";
+                    Log.d(TAG, "chat: reply=\"" + reply + "\" actions=" + resp.actions.size());
                     String updatedHistory = AgentClient.saveHistory(history, text, resp.reply);
                     prefs.edit().putString("conversation_history", updatedHistory).apply();
 
@@ -145,6 +147,7 @@ public class MainActivity extends Activity {
                     done = true;
 
                 } catch (AgentClient.RateLimitException rle) {
+                    Log.d(TAG, "chat: rate limited, waiting " + rle.retryAfterSeconds + "s");
                     final int total = rle.retryAfterSeconds;
                     for (int remaining = total; remaining >= 0; remaining--) {
                         final int r = remaining;
