@@ -21,7 +21,7 @@ public class ChatAdapter extends ArrayAdapter<ChatMessage> {
 
     @Override
     public int getViewTypeCount() {
-        return 3;
+        return 4;
     }
 
     @Override
@@ -33,32 +33,47 @@ public class ChatAdapter extends ArrayAdapter<ChatMessage> {
     public View getView(int position, View convertView, ViewGroup parent) {
         ChatMessage msg = getItem(position);
 
-        if (msg.role == ChatMessage.ROLE_TYPING) {
-            if (convertView == null) {
-                convertView = inflater.inflate(R.layout.item_message_typing, parent, false);
+        switch (msg.role) {
+            case ChatMessage.ROLE_TYPING: {
+                if (convertView == null) {
+                    convertView = inflater.inflate(R.layout.item_message_typing, parent, false);
+                }
+                TextView text     = convertView.findViewById(R.id.typing_text);
+                ProgressBar bar   = convertView.findViewById(R.id.typing_progress);
+                TextView cancel   = convertView.findViewById(R.id.typing_cancel);
+                text.setText(msg.content);
+                if (msg.maxProgress > 0) {
+                    bar.setVisibility(View.VISIBLE);
+                    bar.setProgress(msg.progress);
+                    if (msg.onCancel != null) {
+                        cancel.setVisibility(View.VISIBLE);
+                        cancel.setOnClickListener(v -> msg.onCancel.run());
+                    } else {
+                        cancel.setVisibility(View.GONE);
+                    }
+                } else {
+                    bar.setVisibility(View.GONE);
+                    cancel.setVisibility(View.GONE);
+                }
+                return convertView;
             }
-            TextView text = convertView.findViewById(R.id.typing_text);
-            ProgressBar bar = convertView.findViewById(R.id.typing_progress);
-            text.setText(msg.content);
-            if (msg.maxProgress > 0) {
-                bar.setVisibility(View.VISIBLE);
-                bar.setProgress(msg.progress);
-            } else {
-                bar.setVisibility(View.GONE);
+            case ChatMessage.ROLE_SYSTEM: {
+                if (convertView == null) {
+                    convertView = inflater.inflate(R.layout.item_message_system, parent, false);
+                }
+                ((TextView) convertView.findViewById(R.id.message_text)).setText(msg.content);
+                return convertView;
             }
-            return convertView;
+            default: {
+                int layout = (msg.role == ChatMessage.ROLE_USER)
+                    ? R.layout.item_message_user
+                    : R.layout.item_message_bot;
+                if (convertView == null) {
+                    convertView = inflater.inflate(layout, parent, false);
+                }
+                ((TextView) convertView.findViewById(R.id.message_text)).setText(msg.content);
+                return convertView;
+            }
         }
-
-        int layout = (msg.role == ChatMessage.ROLE_USER)
-            ? R.layout.item_message_user
-            : R.layout.item_message_bot;
-
-        if (convertView == null) {
-            convertView = inflater.inflate(layout, parent, false);
-        }
-
-        TextView tv = convertView.findViewById(R.id.message_text);
-        tv.setText(msg.content);
-        return convertView;
     }
 }

@@ -34,6 +34,16 @@
             android:progress="0"
             android:visibility="gone" />
 
+        <TextView
+            android:id="@+id/typing_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="cancel"
+            android:textColor="#a26769"
+            android:textSize="12sp"
+            android:visibility="gone" />
+
     </LinearLayout>
 
 </LinearLayout>

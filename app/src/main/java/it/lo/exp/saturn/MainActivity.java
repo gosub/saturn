@@ -42,6 +42,7 @@ public class MainActivity extends Activity {
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     private ChatMessage typingMessage;
+    private volatile boolean cancelRetry = false;
     private int dotStep = 0;
     private final Handler dotsHandler = new Handler(Looper.getMainLooper());
     private final Runnable dotsRunnable = new Runnable() {
@@ -158,7 +159,13 @@ public class MainActivity extends Activity {
                 } catch (AgentClient.RateLimitException rle) {
                     Log.d(TAG, "chat: rate limited, waiting " + rle.retryAfterSeconds + "s");
                     final int total = rle.retryAfterSeconds;
-                    for (int remaining = total; remaining >= 0; remaining--) {
+                    cancelRetry = false;
+                    runOnUiThread(() -> {
+                        if (typingMessage != null) {
+                            typingMessage.onCancel = () -> { cancelRetry = true; };
+                        }
+                    });
+                    for (int remaining = total; remaining >= 0 && !cancelRetry; remaining--) {
                         final int r = remaining;
                         final int progress = ((total - r) * 100) / total;
                         runOnUiThread(() -> {
@@ -176,11 +183,18 @@ public class MainActivity extends Activity {
                             }
                         }
                     }
-                    if (!done) {
+                    if (cancelRetry) {
+                        done = true;
+                        runOnUiThread(() -> {
+                            hideTypingIndicator();
+                            setInputEnabled(true);
+                        });
+                    } else if (!done) {
                         runOnUiThread(() -> {
                             if (typingMessage != null) {
                                 typingMessage.content = DOTS[0];
                                 typingMessage.maxProgress = 0;
+                                typingMessage.onCancel = null;
                                 dotStep = 0;
                                 adapter.notifyDataSetChanged();
                                 dotsHandler.postDelayed(dotsRunnable, 400);
@@ -226,7 +240,7 @@ public class MainActivity extends Activity {
         List<Task> tasks;
         synchronized (db) { tasks = db.getTasks(); }
         if (tasks.isEmpty()) {
-            addBotMessage("No active tasks.");
+            addSystemMessage("No active tasks.");
             return;
         }
         StringBuilder sb = new StringBuilder("Active tasks (" + tasks.size() + "):\n");
@@ -237,7 +251,7 @@ public class MainActivity extends Activity {
             if (t.recurring) sb.append("\u21bb ");
             sb.append(t.description).append("\n     \u2192 ").append(nudge);
         }
-        addBotMessage(sb.toString().trim());
+        addSystemMessage(sb.toString().trim());
     }
 
     private void showPeriodSummary(boolean week) {
@@ -268,7 +282,7 @@ public class MainActivity extends Activity {
 
         String label = week ? "This week:" : "Today:";
         if (tasks.isEmpty()) {
-            addBotMessage(label + "\nNothing scheduled.");
+            addSystemMessage(label + "\nNothing scheduled.");
             return;
         }
         StringBuilder sb = new StringBuilder(label + "\n");
@@ -283,7 +297,7 @@ public class MainActivity extends Activity {
             sb.append("\n  ").append(t.recurring ? "\u21bb " : "\u2022 ")
               .append(t.description).append(time);
         }
-        addBotMessage(sb.toString().trim());
+        addSystemMessage(sb.toString().trim());
     }
 
     private void showDebug() {
@@ -309,7 +323,7 @@ public class MainActivity extends Activity {
             sb.append("\n       next: ")
               .append(t.nextNudgeAt != null ? t.nextNudgeAt : "not set");
         }
-        addBotMessage(sb.toString().trim());
+        addSystemMessage(sb.toString().trim());
     }
 
     // ---- Typing indicator ----
@@ -340,6 +354,12 @@ public class MainActivity extends Activity {
 
     private void addBotMessage(String text) {
         messages.add(new ChatMessage(ChatMessage.ROLE_BOT, text));
+        adapter.notifyDataSetChanged();
+        chatList.smoothScrollToPosition(messages.size() - 1);
+    }
+
+    private void addSystemMessage(String text) {
+        messages.add(new ChatMessage(ChatMessage.ROLE_SYSTEM, text));
         adapter.notifyDataSetChanged();
         chatList.smoothScrollToPosition(messages.size() - 1);
     }
