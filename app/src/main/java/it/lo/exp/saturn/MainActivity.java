@@ -9,12 +9,19 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.view.MenuItem;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.PopupMenu;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -69,6 +76,8 @@ public class MainActivity extends Activity {
 
         findViewById(R.id.settings_btn).setOnClickListener(v ->
             startActivity(new Intent(this, SettingsActivity.class)));
+
+        findViewById(R.id.overflow_btn).setOnClickListener(this::showOverflowMenu);
 
         if (android.os.Build.VERSION.SDK_INT >= 33) {
             if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
@@ -192,6 +201,118 @@ public class MainActivity extends Activity {
             }
         });
     }
+
+    // ---- Overflow menu ----
+
+    private void showOverflowMenu(View anchor) {
+        PopupMenu menu = new PopupMenu(this, anchor);
+        menu.getMenu().add(0, 1, 0, "Tasks");
+        menu.getMenu().add(0, 2, 1, "Today");
+        menu.getMenu().add(0, 3, 2, "This week");
+        menu.getMenu().add(0, 4, 3, "Debug");
+        menu.setOnMenuItemClickListener((MenuItem item) -> {
+            switch (item.getItemId()) {
+                case 1: showTasks();              return true;
+                case 2: showPeriodSummary(false); return true;
+                case 3: showPeriodSummary(true);  return true;
+                case 4: showDebug();              return true;
+            }
+            return false;
+        });
+        menu.show();
+    }
+
+    private void showTasks() {
+        List<Task> tasks;
+        synchronized (db) { tasks = db.getTasks(); }
+        if (tasks.isEmpty()) {
+            addBotMessage("No active tasks.");
+            return;
+        }
+        StringBuilder sb = new StringBuilder("Active tasks (" + tasks.size() + "):\n");
+        for (Task t : tasks) {
+            String nudge = (t.nextNudgeAt != null && !t.nextNudgeAt.isEmpty())
+                ? t.nextNudgeAt : "not set";
+            sb.append("\n  ").append(t.id).append(". ");
+            if (t.recurring) sb.append("\u21bb ");
+            sb.append(t.description).append("\n     \u2192 ").append(nudge);
+        }
+        addBotMessage(sb.toString().trim());
+    }
+
+    private void showPeriodSummary(boolean week) {
+        String tzId = prefs.getString("timezone", "");
+        TimeZone zone = (tzId != null && !tzId.isEmpty())
+            ? TimeZone.getTimeZone(tzId) : TimeZone.getDefault();
+        Calendar cal = Calendar.getInstance(zone);
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        if (week) {
+            int dow = cal.get(Calendar.DAY_OF_WEEK);
+            int toMonday = (dow == Calendar.SUNDAY) ? -6 : Calendar.MONDAY - dow;
+            cal.add(Calendar.DAY_OF_MONTH, toMonday);
+        }
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
+        sdf.setTimeZone(zone);
+        String from = sdf.format(cal.getTime());
+        if (week) cal.add(Calendar.DAY_OF_MONTH, 6);
+        cal.set(Calendar.HOUR_OF_DAY, 23);
+        cal.set(Calendar.MINUTE, 59);
+        cal.set(Calendar.SECOND, 59);
+        String to = sdf.format(cal.getTime());
+
+        List<Task> tasks;
+        synchronized (db) { tasks = db.getTasksForPeriod(from, to); }
+
+        String label = week ? "This week:" : "Today:";
+        if (tasks.isEmpty()) {
+            addBotMessage(label + "\nNothing scheduled.");
+            return;
+        }
+        StringBuilder sb = new StringBuilder(label + "\n");
+        for (Task t : tasks) {
+            String time = "";
+            if (t.nextNudgeAt != null && t.nextNudgeAt.length() >= 16) {
+                time = " \u2014 " + t.nextNudgeAt.substring(11, 16);
+                if (week && t.nextNudgeAt.length() >= 10) {
+                    time = " \u2014 " + t.nextNudgeAt.substring(5, 10) + " " + t.nextNudgeAt.substring(11, 16);
+                }
+            }
+            sb.append("\n  ").append(t.recurring ? "\u21bb " : "\u2022 ")
+              .append(t.description).append(time);
+        }
+        addBotMessage(sb.toString().trim());
+    }
+
+    private void showDebug() {
+        StringBuilder sb = new StringBuilder("Debug:\n\n");
+        sb.append("model:    ").append(prefs.getString("model", "\u2014")).append("\n");
+        sb.append("timezone: ").append(prefs.getString("timezone", "\u2014")).append("\n");
+        sb.append("language: ").append(prefs.getString("language", "\u2014")).append("\n");
+        sb.append("schedule: ").append(prefs.getString("schedule", "not set")).append("\n");
+        List<AgentClient.Message> hist = AgentClient.loadHistory(
+            prefs.getString("conversation_history", ""));
+        sb.append("history:  ").append(hist.size() / 2).append(" turns\n");
+        String next;
+        List<Task> tasks;
+        synchronized (db) {
+            next = db.getNextScheduledTime();
+            tasks = db.getTasks();
+        }
+        sb.append("next alarm: ").append(next != null ? next : "none").append("\n");
+        sb.append("\ntasks (").append(tasks.size()).append("):\n");
+        for (Task t : tasks) {
+            sb.append("\n  [").append(t.id).append("] ").append(t.description);
+            if (t.recurring) sb.append(" [\u21bb]");
+            sb.append("\n       next: ")
+              .append(t.nextNudgeAt != null ? t.nextNudgeAt : "not set");
+        }
+        addBotMessage(sb.toString().trim());
+    }
+
+    // ---- Typing indicator ----
 
     private void showTypingIndicator() {
         dotStep = 0;

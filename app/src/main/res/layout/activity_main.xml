@@ -33,6 +33,17 @@
             android:textColor="#ece2d0"
             android:background="@android:color/transparent"
             android:paddingStart="12dp"
+            android:paddingEnd="4dp" />
+
+        <Button
+            android:id="@+id/overflow_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="&#8942;"
+            android:textSize="20sp"
+            android:textColor="#ece2d0"
+            android:background="@android:color/transparent"
+            android:paddingStart="4dp"
             android:paddingEnd="12dp" />
 
     </LinearLayout>

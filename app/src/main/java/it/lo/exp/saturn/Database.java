@@ -111,6 +111,19 @@ public class Database extends SQLiteOpenHelper {
         }
     }
 
+    public List<Task> getTasksForPeriod(String from, String to) {
+        List<Task> tasks = new ArrayList<>();
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor c = db.query("tasks", null,
+            "next_nudge_at IS NOT NULL AND next_nudge_at >= ? AND next_nudge_at <= ?",
+            new String[]{from, to}, null, null, "next_nudge_at ASC");
+        while (c.moveToNext()) {
+            tasks.add(rowToTask(c));
+        }
+        c.close();
+        return tasks;
+    }
+
     public List<Task> getUnscheduledTasks() {
         List<Task> tasks = new ArrayList<>();
         SQLiteDatabase db = getReadableDatabase();
