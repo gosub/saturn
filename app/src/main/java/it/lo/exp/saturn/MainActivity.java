@@ -61,7 +61,7 @@ public class MainActivity extends Activity {
             }
         }
 
-        NudgeScheduler.schedule(this, prefs.getInt("nudge_interval_m", 30));
+        NudgeScheduler.scheduleNext(this, db);
     }
 
     @Override
@@ -102,6 +102,7 @@ public class MainActivity extends Activity {
                     .chat(apiKey, model, systemPrompt, history, text);
 
                 ActionExecutor.execute(resp.actions, db, prefs);
+                NudgeScheduler.scheduleNext(MainActivity.this, db);
 
                 String reply = (resp.reply != null && !resp.reply.isEmpty())
                     ? resp.reply : "(no reply)";

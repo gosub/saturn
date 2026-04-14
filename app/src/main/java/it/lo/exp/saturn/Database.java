@@ -99,6 +99,18 @@ public class Database extends SQLiteOpenHelper {
         return tasks;
     }
 
+    public String getNextScheduledTime() {
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor c = db.query("tasks", new String[]{"next_nudge_at"},
+            "next_nudge_at IS NOT NULL", null, null, null, "next_nudge_at ASC", "1");
+        try {
+            if (c.moveToFirst()) return c.getString(0);
+            return null;
+        } finally {
+            c.close();
+        }
+    }
+
     public List<Task> getUnscheduledTasks() {
         List<Task> tasks = new ArrayList<>();
         SQLiteDatabase db = getReadableDatabase();

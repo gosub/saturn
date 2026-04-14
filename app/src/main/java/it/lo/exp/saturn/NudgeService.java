@@ -69,6 +69,7 @@ public class NudgeService extends Service {
                               due, nowMillis, nowISO);
             }
             runSchedulePhase(db, prefs, apiKey, model, language, schedule, timezone, nowMillis);
+            NudgeScheduler.scheduleNext(this, db);
         } finally {
             db.close();
         }

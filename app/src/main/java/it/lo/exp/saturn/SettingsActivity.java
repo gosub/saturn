@@ -15,7 +15,7 @@ import java.util.TimeZone;
 public class SettingsActivity extends Activity {
 
     private SharedPreferences prefs;
-    private EditText apiKeyField, modelField, timezoneField, nudgeIntervalField, scheduleField;
+    private EditText apiKeyField, modelField, timezoneField, scheduleField;
     private Spinner languageSpinner;
     private String selectedLanguage = "en";
 
@@ -26,11 +26,10 @@ public class SettingsActivity extends Activity {
 
         prefs = getSharedPreferences("saturn", MODE_PRIVATE);
 
-        apiKeyField       = findViewById(R.id.field_api_key);
-        modelField        = findViewById(R.id.field_model);
-        timezoneField     = findViewById(R.id.field_timezone);
-        nudgeIntervalField = findViewById(R.id.field_nudge_interval);
-        scheduleField     = findViewById(R.id.field_schedule);
+        apiKeyField   = findViewById(R.id.field_api_key);
+        modelField    = findViewById(R.id.field_model);
+        timezoneField = findViewById(R.id.field_timezone);
+        scheduleField = findViewById(R.id.field_schedule);
         languageSpinner   = findViewById(R.id.spinner_language);
 
         ArrayAdapter<String> langAdapter = new ArrayAdapter<>(this,
@@ -53,7 +52,6 @@ public class SettingsActivity extends Activity {
         apiKeyField.setText(prefs.getString("api_key", ""));
         modelField.setText(prefs.getString("model", "openai/gpt-4o-mini"));
         timezoneField.setText(prefs.getString("timezone", TimeZone.getDefault().getID()));
-        nudgeIntervalField.setText(String.valueOf(prefs.getInt("nudge_interval_m", 30)));
         scheduleField.setText(prefs.getString("schedule", ""));
 
         Button saveBtn = findViewById(R.id.save_btn);
@@ -70,24 +68,17 @@ public class SettingsActivity extends Activity {
         String timezone = timezoneField.getText().toString().trim();
         String schedule = scheduleField.getText().toString().trim();
 
-        int intervalM = 30;
-        try {
-            intervalM = Integer.parseInt(nudgeIntervalField.getText().toString().trim());
-        } catch (NumberFormatException ignored) {}
-
         if (model.isEmpty())    model    = "openai/gpt-4o-mini";
         if (timezone.isEmpty()) timezone = TimeZone.getDefault().getID();
 
         prefs.edit()
-            .putString("api_key",         apiKey)
-            .putString("model",           model)
-            .putString("timezone",        timezone)
-            .putString("language",        selectedLanguage)
-            .putInt("nudge_interval_m",   intervalM)
-            .putString("schedule",        schedule)
+            .putString("api_key",  apiKey)
+            .putString("model",    model)
+            .putString("timezone", timezone)
+            .putString("language", selectedLanguage)
+            .putString("schedule", schedule)
             .apply();
 
-        NudgeScheduler.schedule(this, intervalM);
         finish();
     }
 }

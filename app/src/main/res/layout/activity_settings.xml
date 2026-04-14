@@ -92,23 +92,6 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Nudge interval (minutes)"
-            android:textColor="#AAAAAA"
-            android:textSize="13sp"
-            android:paddingBottom="4dp" />
-        <EditText
-            android:id="@+id/field_nudge_interval"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:inputType="number"
-            android:textColor="#FFFFFF"
-            android:background="@drawable/input_bg"
-            android:padding="12dp"
-            android:layout_marginBottom="16dp" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
             android:text="Schedule (freeform)"
             android:textColor="#AAAAAA"
             android:textSize="13sp"
