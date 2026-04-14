@@ -129,7 +129,7 @@ public class AgentClient {
             throw new IOException("No choices in response");
         }
 
-        String content = chatResp.choices.get(0).message.content;
+        String content = stripCodeFences(chatResp.choices.get(0).message.content);
         Log.d(TAG, "openrouter response: bytes=" + content.length());
 
         try {
@@ -262,6 +262,18 @@ public class AgentClient {
     }
 
     // ---- Helpers ----
+
+    private static String stripCodeFences(String s) {
+        if (s == null) return s;
+        s = s.trim();
+        if (s.startsWith("```")) {
+            int newline = s.indexOf('\n');
+            if (newline != -1) s = s.substring(newline + 1);
+            if (s.endsWith("```")) s = s.substring(0, s.length() - 3);
+            s = s.trim();
+        }
+        return s;
+    }
 
     private static String formatNow(long millis, String timezone) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss (EEEE)", Locale.ENGLISH);
