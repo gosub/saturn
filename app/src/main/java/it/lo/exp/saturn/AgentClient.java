@@ -227,7 +227,10 @@ public class AgentClient {
         }
         sb.append("\nSend the user a short nudge. One task, one sentence, no fluff.\n");
         sb.append("If multiple tasks are due, pick the most urgent one.\n");
-        sb.append("After nudging a recurring task (\u21bb), always use update_task to set the next next_nudge_at.\n");
+        sb.append("After nudging, you MUST do one of the following for each due task:\n");
+        sb.append("  - Recurring (\u21bb): use update_task to set the next next_nudge_at.\n");
+        sb.append("  - One-time: use complete_task if done, or update_task with a new next_nudge_at if it should repeat.\n");
+        sb.append("Never leave a task without a next_nudge_at after nudging.\n");
         sb.append("If no nudge is appropriate right now, return empty reply.\n\n");
         sb.append("Respond: {\"reply\": \"...\", \"actions\": [...]}\n");
         sb.append("Actions: update_task (id, description optional, next_nudge_at optional), complete_task (id), delete_task (id).\n");

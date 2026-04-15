@@ -69,9 +69,16 @@ public class NudgeService extends Service {
                               due, nowMillis, nowISO);
                 // Always clear still-due tasks after the phase, even if it failed,
                 // so a past next_nudge_at never causes an immediate-refire loop.
-                for (Task t : db.getDueTasks(nowISO)) {
+                List<Task> stillDue = db.getDueTasks(nowISO);
+                for (Task t : stillDue) {
                     Log.d(TAG, "clearing unresolved due task " + t.id);
                     db.setNextNudgeAt(t.id, null);
+                }
+                if (!stillDue.isEmpty()) {
+                    StringBuilder warn = new StringBuilder("⚠ No reminder set for:");
+                    for (Task t : stillDue) warn.append("\n  \u2022 ").append(t.description);
+                    warn.append("\nTell me when to remind you again.");
+                    appendPendingNudge(prefs, warn.toString());
                 }
             }
             NudgeScheduler.scheduleNext(this, db);
@@ -94,14 +101,18 @@ public class NudgeService extends Service {
 
             if (resp.reply != null && !resp.reply.isEmpty()) {
                 postNudgeNotification(resp.reply);
-                String existing = prefs.getString("pending_nudges", "[]");
-                com.google.gson.JsonArray arr = com.google.gson.JsonParser.parseString(existing).getAsJsonArray();
-                arr.add(resp.reply);
-                prefs.edit().putString("pending_nudges", arr.toString()).apply();
+                appendPendingNudge(prefs, resp.reply);
             }
         } catch (Exception e) {
             Log.e(TAG, "nudge phase error", e);
         }
+    }
+
+    private static void appendPendingNudge(SharedPreferences prefs, String message) {
+        String existing = prefs.getString("pending_nudges", "[]");
+        com.google.gson.JsonArray arr = com.google.gson.JsonParser.parseString(existing).getAsJsonArray();
+        arr.add(message);
+        prefs.edit().putString("pending_nudges", arr.toString()).apply();
     }
 
     private Notification buildCheckingNotification() {
