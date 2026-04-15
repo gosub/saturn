@@ -34,6 +34,12 @@ public class NudgeScheduler {
             return;
         }
 
+        if (triggerMs < System.currentTimeMillis()) {
+            Log.d(TAG, "next nudge time is in the past (" + nextTime + "), skipping alarm");
+            am.cancel(pi);
+            return;
+        }
+
         if (Build.VERSION.SDK_INT >= 31 && !am.canScheduleExactAlarms()) {
             // No permission granted — use a 15-minute window around the target time
             am.setWindow(AlarmManager.RTC_WAKEUP, triggerMs, 15 * 60 * 1000L, pi);

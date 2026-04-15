@@ -67,6 +67,12 @@ public class NudgeService extends Service {
                 Log.d(TAG, "nudge phase: " + due.size() + " due tasks");
                 runNudgePhase(db, prefs, apiKey, model, language, schedule, timezone,
                               due, nowMillis, nowISO);
+                // Always clear still-due tasks after the phase, even if it failed,
+                // so a past next_nudge_at never causes an immediate-refire loop.
+                for (Task t : db.getDueTasks(nowISO)) {
+                    Log.d(TAG, "clearing unresolved due task " + t.id);
+                    db.setNextNudgeAt(t.id, null);
+                }
             }
             runSchedulePhase(db, prefs, apiKey, model, language, schedule, timezone, nowMillis);
             NudgeScheduler.scheduleNext(this, db);
@@ -86,11 +92,6 @@ public class NudgeService extends Service {
             AgentClient.AgentResponse resp = new AgentClient()
                 .chat(apiKey, model, prompt, null, trigger);
             ActionExecutor.execute(resp.actions, db, prefs);
-
-            // Clear still-due tasks that the LLM didn't reschedule, so they don't fire every cycle.
-            for (Task t : db.getDueTasks(nowISO)) {
-                db.setNextNudgeAt(t.id, null);
-            }
 
             if (resp.reply != null && !resp.reply.isEmpty()) {
                 postNudgeNotification(resp.reply);
