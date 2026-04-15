@@ -58,8 +58,8 @@ public class SettingsActivity extends Activity {
 
         Button toggleKeyBtn = findViewById(R.id.toggle_key_visibility);
         toggleKeyBtn.setOnClickListener(v -> {
-            int type = apiKeyField.getInputType();
-            if ((type & InputType.TYPE_TEXT_VARIATION_PASSWORD) != 0) {
+            int variation = apiKeyField.getInputType() & InputType.TYPE_MASK_VARIATION;
+            if (variation == InputType.TYPE_TEXT_VARIATION_PASSWORD) {
                 apiKeyField.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
             } else {
                 apiKeyField.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
