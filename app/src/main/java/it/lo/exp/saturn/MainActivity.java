@@ -2,12 +2,18 @@ package it.lo.exp.saturn;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.AlarmManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
@@ -90,6 +96,23 @@ public class MainActivity extends Activity {
         }
 
         NudgeScheduler.scheduleNext(this, db);
+        checkExactAlarmPermission();
+    }
+
+    private void checkExactAlarmPermission() {
+        if (Build.VERSION.SDK_INT < 31) return;
+        AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        if (am.canScheduleExactAlarms()) return;
+        new AlertDialog.Builder(this)
+            .setTitle("Exact alarms needed")
+            .setMessage("Saturn needs permission to schedule exact alarms so nudges fire on time. Tap OK to open Settings.")
+            .setPositiveButton("OK", (d, w) -> {
+                Intent intent = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
+                    Uri.parse("package:" + getPackageName()));
+                startActivity(intent);
+            })
+            .setNegativeButton("Not now", null)
+            .show();
     }
 
     @Override
