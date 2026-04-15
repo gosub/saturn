@@ -202,7 +202,17 @@ public class AgentClient {
         sb.append("The following tasks are due for a nudge:\n");
         for (Task t : tasks) {
             String prefix = t.recurring ? "\u21bb " : "";
-            sb.append("  ").append(t.id).append(". ").append(prefix).append(t.description).append("\n");
+            String late = "";
+            if (t.nextNudgeAt != null && !t.nextNudgeAt.isEmpty()) {
+                try {
+                    long scheduledMs = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
+                        .parse(t.nextNudgeAt).getTime();
+                    long lateMin = (nowMillis - scheduledMs) / 60000;
+                    if (lateMin > 15) late = " [LATE by " + lateMin + " min]";
+                } catch (Exception ignored) {}
+            }
+            sb.append("  ").append(t.id).append(". ").append(prefix)
+              .append(t.description).append(late).append("\n");
         }
         sb.append("\nSend the user a short nudge. One task, one sentence, no fluff.\n");
         sb.append("If multiple tasks are due, pick the most urgent one.\n");

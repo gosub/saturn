@@ -35,8 +35,9 @@ public class NudgeScheduler {
         }
 
         if (triggerMs < System.currentTimeMillis()) {
-            Log.d(TAG, "next nudge time is in the past (" + nextTime + "), skipping alarm");
+            Log.d(TAG, "next nudge time is in the past (" + nextTime + "), starting service now");
             am.cancel(pi);
+            context.startForegroundService(new Intent(context, NudgeService.class));
             return;
         }
 
