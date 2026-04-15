@@ -94,7 +94,10 @@ public class NudgeService extends Service {
 
             if (resp.reply != null && !resp.reply.isEmpty()) {
                 postNudgeNotification(resp.reply);
-                prefs.edit().putString("pending_nudge", resp.reply).apply();
+                String existing = prefs.getString("pending_nudges", "[]");
+                com.google.gson.JsonArray arr = com.google.gson.JsonParser.parseString(existing).getAsJsonArray();
+                arr.add(resp.reply);
+                prefs.edit().putString("pending_nudges", arr.toString()).apply();
             }
         } catch (Exception e) {
             Log.e(TAG, "nudge phase error", e);

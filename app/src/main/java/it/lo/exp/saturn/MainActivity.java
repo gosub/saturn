@@ -118,11 +118,14 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        String nudge = prefs.getString("pending_nudge", "");
-        if (!nudge.isEmpty()) {
-            prefs.edit().remove("pending_nudge").apply();
-            addBotMessage(nudge);
-        }
+        String pending = prefs.getString("pending_nudges", "[]");
+        prefs.edit().remove("pending_nudges").apply();
+        try {
+            com.google.gson.JsonArray arr = com.google.gson.JsonParser.parseString(pending).getAsJsonArray();
+            for (com.google.gson.JsonElement el : arr) {
+                addBotMessage(el.getAsString());
+            }
+        } catch (Exception ignored) {}
     }
 
     @Override
