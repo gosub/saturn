@@ -153,7 +153,7 @@ public class MainActivity extends Activity {
 
         executor.execute(() -> {
             Log.d(TAG, "chat: user=\"" + text + "\"");
-            String model    = prefs.getString("model", "google/gemma-4-31b-it:free");
+            String model    = prefs.getString("model", "openai/gpt-oss-120b:free");
             String timezone = prefs.getString("timezone", "");
             String language = prefs.getString("language", "en");
             String schedule = prefs.getString("schedule", "");
