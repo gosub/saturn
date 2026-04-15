@@ -50,7 +50,7 @@ public class SettingsActivity extends Activity {
             public void onNothingSelected(AdapterView<?> parent) {}
         });
 
-        apiKeyField.setText(prefs.getString("api_key", ""));
+        apiKeyField.setText(KeystoreHelper.readApiKey(prefs));
         modelField.setText(prefs.getString("model", "google/gemma-4-31b-it:free"));
         timezoneField.setText(prefs.getString("timezone", TimeZone.getDefault().getID()));
         scheduleField.setText(prefs.getString("schedule", ""));
