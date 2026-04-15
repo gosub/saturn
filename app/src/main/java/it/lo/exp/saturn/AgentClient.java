@@ -137,11 +137,26 @@ public class AgentClient {
             if (resp.actions == null) resp.actions = new ArrayList<>();
             return resp;
         } catch (JsonSyntaxException e) {
-            Log.w(TAG, "response not valid JSON, using as plain reply");
-            AgentResponse fallback = new AgentResponse();
-            fallback.reply = content;
-            fallback.actions = new ArrayList<>();
-            return fallback;
+            Log.w(TAG, "strict parse failed, trying lenient extraction: " + e.getMessage());
+            // Try JsonParser which is more lenient (e.g. trailing commas, extra whitespace)
+            try {
+                com.google.gson.JsonObject obj =
+                    com.google.gson.JsonParser.parseString(content).getAsJsonObject();
+                AgentResponse resp = new AgentResponse();
+                resp.reply   = obj.has("reply")   ? obj.get("reply").getAsString() : "";
+                resp.actions = new ArrayList<>();
+                if (obj.has("actions")) {
+                    Action[] arr = GSON.fromJson(obj.get("actions"), Action[].class);
+                    if (arr != null) for (Action a : arr) resp.actions.add(a);
+                }
+                return resp;
+            } catch (Exception e2) {
+                Log.w(TAG, "lenient parse also failed, using raw content as reply");
+                AgentResponse fallback = new AgentResponse();
+                fallback.reply   = content;
+                fallback.actions = new ArrayList<>();
+                return fallback;
+            }
         }
     }
 
