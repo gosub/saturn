@@ -26,17 +26,33 @@
             android:textColor="#a26769"
             android:textSize="13sp"
             android:paddingBottom="4dp" />
-        <EditText
-            android:id="@+id/field_api_key"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:inputType="textPassword"
-            android:textColor="#6d2e46"
-            android:background="@drawable/input_bg"
-            android:padding="12dp"
-            android:layout_marginBottom="16dp"
-            android:hint="sk-or-..."
-            android:textColorHint="#a26769" />
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+            <EditText
+                android:id="@+id/field_api_key"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:inputType="textPassword"
+                android:textColor="#6d2e46"
+                android:background="@drawable/input_bg"
+                android:padding="12dp"
+                android:hint="sk-or-..."
+                android:textColorHint="#a26769" />
+            <Button
+                android:id="@+id/toggle_key_visibility"
+                android:layout_width="48dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="&#128065;"
+                android:textSize="18sp"
+                android:background="@android:color/transparent"
+                android:padding="0dp"
+                android:minWidth="0dp" />
+        </LinearLayout>
 
         <TextView
             android:layout_width="match_parent"

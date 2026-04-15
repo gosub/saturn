@@ -3,6 +3,7 @@ package it.lo.exp.saturn;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.text.InputType;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -54,6 +55,17 @@ public class SettingsActivity extends Activity {
         modelField.setText(prefs.getString("model", "google/gemma-4-31b-it:free"));
         timezoneField.setText(prefs.getString("timezone", TimeZone.getDefault().getID()));
         scheduleField.setText(prefs.getString("schedule", ""));
+
+        Button toggleKeyBtn = findViewById(R.id.toggle_key_visibility);
+        toggleKeyBtn.setOnClickListener(v -> {
+            int type = apiKeyField.getInputType();
+            if ((type & InputType.TYPE_TEXT_VARIATION_PASSWORD) != 0) {
+                apiKeyField.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+            } else {
+                apiKeyField.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+            }
+            apiKeyField.setSelection(apiKeyField.getText().length());
+        });
 
         Button saveBtn = findViewById(R.id.save_btn);
         saveBtn.setOnClickListener(v -> save());
