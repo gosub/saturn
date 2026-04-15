@@ -192,12 +192,12 @@ public class AgentClient {
         sb.append("Respond ONLY with a JSON object: {\"reply\": \"...\", \"actions\": [...]}\n");
         sb.append("No text outside the JSON. If no actions are needed, use \"actions\": [].\n\n");
         sb.append("Available actions:\n");
-        sb.append("  {\"type\": \"add_task\",        \"description\": \"...\", \"next_nudge_at\": \"ISO8601\", \"recurring\": true}\n");
+        sb.append("  {\"type\": \"add_task\",        \"description\": \"...\", \"next_nudge_at\": \"ISO8601 (required)\", \"recurring\": true}\n");
         sb.append("  {\"type\": \"update_task\",     \"id\": N, \"description\": \"...\", \"next_nudge_at\": \"ISO8601\", \"recurring\": true}\n");
         sb.append("  {\"type\": \"complete_task\",   \"id\": N}\n");
         sb.append("  {\"type\": \"delete_task\",     \"id\": N}\n");
         sb.append("  {\"type\": \"update_schedule\", \"schedule\": \"...\"}\n");
-        sb.append("Always use numeric id from the task list. Include next_nudge_at when adding a timed task.\n");
+        sb.append("Always use numeric id from the task list. next_nudge_at is required for add_task.\n");
         sb.append("next_nudge_at must be ISO 8601 (e.g. 2026-03-21T09:00:00). Respect the user's schedule.\n");
         sb.append("Set recurring: true for habitual/repeating tasks.\n");
         sb.append("Recurring tasks (\u21bb) must never be completed \u2014 use update_task with the next next_nudge_at.\n");
@@ -235,27 +235,6 @@ public class AgentClient {
         sb.append("If no nudge is appropriate right now, return empty reply.\n\n");
         sb.append("Respond: {\"reply\": \"...\", \"actions\": [...]}\n");
         sb.append("Actions: update_task (id, description optional, next_nudge_at optional), complete_task (id), delete_task (id).\n");
-        return sb.toString();
-    }
-
-    public static String buildSchedulePrompt(String language, String schedule,
-                                              List<Task> tasks, long nowMillis, String timezone) {
-        String now = formatNow(nowMillis, timezone);
-        StringBuilder sb = new StringBuilder();
-        sb.append("You are Saturn, a scheduling assistant.\n");
-        sb.append("Current time: ").append(now).append("\n");
-        if (schedule != null && !schedule.isEmpty()) {
-            sb.append("User's schedule: ").append(schedule).append("\n\n");
-        }
-        sb.append("Always respond in ").append(langName(language)).append(".\n\n");
-        sb.append("The following tasks have no scheduled reminder time:\n");
-        for (Task t : tasks) {
-            sb.append("  ").append(t.id).append(". ").append(t.description).append("\n");
-        }
-        sb.append("\nAssign each task a next_nudge_at using update_task actions.\n");
-        sb.append("Base the time on the task description and the user's schedule. If unclear, schedule within 24 hours.\n");
-        sb.append("Respond: {\"reply\": \"\", \"actions\": [...]}\n");
-        sb.append("Actions: update_task (id, next_nudge_at required). No reply text.\n");
         return sb.toString();
     }
 

@@ -74,7 +74,6 @@ public class NudgeService extends Service {
                     db.setNextNudgeAt(t.id, null);
                 }
             }
-            runSchedulePhase(db, prefs, apiKey, model, language, schedule, timezone, nowMillis);
             NudgeScheduler.scheduleNext(this, db);
         } finally {
             db.close();
@@ -98,26 +97,6 @@ public class NudgeService extends Service {
             }
         } catch (Exception e) {
             Log.e(TAG, "nudge phase error", e);
-        }
-    }
-
-    private void runSchedulePhase(Database db, SharedPreferences prefs,
-                                   String apiKey, String model,
-                                   String language, String schedule, String timezone,
-                                   long nowMillis) {
-        List<Task> unscheduled = db.getUnscheduledTasks();
-        if (unscheduled.isEmpty()) return;
-
-        Log.d(TAG, "schedule phase: " + unscheduled.size() + " unscheduled tasks");
-        try {
-            String prompt = AgentClient.buildSchedulePrompt(language, schedule, unscheduled, nowMillis, timezone);
-            String trigger = unscheduled.size() + " task(s) have no reminder time set.";
-
-            AgentClient.AgentResponse resp = new AgentClient()
-                .chat(apiKey, model, prompt, null, trigger);
-            ActionExecutor.execute(resp.actions, db, prefs);
-        } catch (Exception e) {
-            Log.e(TAG, "schedule phase error", e);
         }
     }
 

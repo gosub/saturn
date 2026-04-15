@@ -124,18 +124,6 @@ public class Database extends SQLiteOpenHelper {
         return tasks;
     }
 
-    public List<Task> getUnscheduledTasks() {
-        List<Task> tasks = new ArrayList<>();
-        SQLiteDatabase db = getReadableDatabase();
-        Cursor c = db.query("tasks", null,
-            "next_nudge_at IS NULL", null, null, null, "id ASC");
-        while (c.moveToNext()) {
-            tasks.add(rowToTask(c));
-        }
-        c.close();
-        return tasks;
-    }
-
     private Task rowToTask(Cursor c) {
         long id = c.getLong(c.getColumnIndexOrThrow("id"));
         String desc = c.getString(c.getColumnIndexOrThrow("description"));
