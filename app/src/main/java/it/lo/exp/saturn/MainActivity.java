@@ -81,8 +81,7 @@ public class MainActivity extends Activity {
 
         sendBtn.setOnClickListener(v -> onSend());
 
-        findViewById(R.id.settings_btn).setOnClickListener(v ->
-            startActivity(new Intent(this, SettingsActivity.class)));
+        findViewById(R.id.tasks_btn).setOnClickListener(v -> showTasks());
 
         findViewById(R.id.overflow_btn).setOnClickListener(this::showOverflowMenu);
 
@@ -256,16 +255,16 @@ public class MainActivity extends Activity {
 
     private void showOverflowMenu(View anchor) {
         PopupMenu menu = new PopupMenu(this, anchor);
-        menu.getMenu().add(0, 1, 0, "Tasks");
-        menu.getMenu().add(0, 2, 1, "Today");
-        menu.getMenu().add(0, 3, 2, "This week");
-        menu.getMenu().add(0, 4, 3, "Debug");
+        menu.getMenu().add(0, 1, 0, "Today");
+        menu.getMenu().add(0, 2, 1, "This week");
+        menu.getMenu().add(0, 3, 2, "Debug");
+        menu.getMenu().add(0, 4, 3, "Settings");
         menu.setOnMenuItemClickListener((MenuItem item) -> {
             switch (item.getItemId()) {
-                case 1: showTasks();              return true;
-                case 2: showPeriodSummary(false); return true;
-                case 3: showPeriodSummary(true);  return true;
-                case 4: showDebug();              return true;
+                case 1: showPeriodSummary(false); return true;
+                case 2: showPeriodSummary(true);  return true;
+                case 3: showDebug();              return true;
+                case 4: startActivity(new Intent(this, SettingsActivity.class)); return true;
             }
             return false;
         });
