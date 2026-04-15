@@ -71,8 +71,17 @@ public class SettingsActivity extends Activity {
         if (model.isEmpty())    model    = "google/gemma-4-31b-it:free";
         if (timezone.isEmpty()) timezone = TimeZone.getDefault().getID();
 
+        String storedKey = apiKey;
+        if (!apiKey.isEmpty()) {
+            try {
+                storedKey = KeystoreHelper.encrypt(apiKey);
+            } catch (Exception e) {
+                android.util.Log.e("Saturn", "keystore encrypt failed", e);
+            }
+        }
+
         prefs.edit()
-            .putString("api_key",  apiKey)
+            .putString("api_key",  storedKey)
             .putString("model",    model)
             .putString("timezone", timezone)
             .putString("language", selectedLanguage)

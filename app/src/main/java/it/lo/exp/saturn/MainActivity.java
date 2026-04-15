@@ -104,7 +104,7 @@ public class MainActivity extends Activity {
         String text = inputField.getText().toString().trim();
         if (text.isEmpty()) return;
 
-        String apiKey = prefs.getString("api_key", "");
+        String apiKey = KeystoreHelper.readApiKey(prefs);
         if (apiKey.isEmpty()) {
             addBotMessage("Please set your OpenRouter API key in Settings.");
             return;

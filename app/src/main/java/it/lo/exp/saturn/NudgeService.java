@@ -45,7 +45,7 @@ public class NudgeService extends Service {
 
     private void runNudgeCycle() {
         SharedPreferences prefs = getSharedPreferences("saturn", MODE_PRIVATE);
-        String apiKey = prefs.getString("api_key", "");
+        String apiKey = KeystoreHelper.readApiKey(prefs);
         if (apiKey.isEmpty()) {
             Log.d(TAG, "no api key set, skipping nudge cycle");
             return;
