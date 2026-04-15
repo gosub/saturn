@@ -18,6 +18,7 @@ public class SettingsActivity extends Activity {
     private EditText apiKeyField, modelField, timezoneField, scheduleField;
     private Spinner languageSpinner;
     private String selectedLanguage = "en";
+    private Database settingsDb;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,6 +61,19 @@ public class SettingsActivity extends Activity {
         Button clearHistoryBtn = findViewById(R.id.clear_history_btn);
         clearHistoryBtn.setOnClickListener(v ->
             prefs.edit().remove("conversation_history").apply());
+
+        settingsDb = new Database(this);
+        Button clearTasksBtn = findViewById(R.id.clear_tasks_btn);
+        clearTasksBtn.setOnClickListener(v -> {
+            settingsDb.clearAllTasks();
+            NudgeScheduler.cancel(this);
+        });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        settingsDb.close();
     }
 
     private void save() {

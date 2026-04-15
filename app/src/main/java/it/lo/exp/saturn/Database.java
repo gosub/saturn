@@ -78,6 +78,10 @@ public class Database extends SQLiteOpenHelper {
         db.update("tasks", cv, "id = ?", new String[]{String.valueOf(id)});
     }
 
+    public void clearAllTasks() {
+        getWritableDatabase().delete("tasks", null, null);
+    }
+
     public void completeTask(long id) {
         getWritableDatabase().delete("tasks", "id = ?", new String[]{String.valueOf(id)});
     }
