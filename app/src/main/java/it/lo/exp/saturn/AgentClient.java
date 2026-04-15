@@ -130,7 +130,7 @@ public class AgentClient {
         }
 
         String content = stripCodeFences(chatResp.choices.get(0).message.content);
-        Log.d(TAG, "openrouter response: bytes=" + content.length());
+        Log.d(TAG, "openrouter response: bytes=" + content.length() + " body=" + content);
 
         try {
             AgentResponse resp = GSON.fromJson(content, AgentResponse.class);
@@ -151,11 +151,7 @@ public class AgentClient {
                 }
                 return resp;
             } catch (Exception e2) {
-                Log.w(TAG, "lenient parse also failed, using raw content as reply");
-                AgentResponse fallback = new AgentResponse();
-                fallback.reply   = content;
-                fallback.actions = new ArrayList<>();
-                return fallback;
+                throw new IOException("invalid JSON from model: " + content);
             }
         }
     }
