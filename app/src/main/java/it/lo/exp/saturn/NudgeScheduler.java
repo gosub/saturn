@@ -21,7 +21,12 @@ public class NudgeScheduler {
 
         if (nextTime == null) {
             am.cancel(pi);
-            Log.d(TAG, "no upcoming tasks, alarm cancelled");
+            if (db.getUnscheduledTasks().isEmpty()) {
+                Log.d(TAG, "no tasks, alarm cancelled");
+            } else {
+                Log.d(TAG, "unscheduled tasks exist but no alarm — starting schedule phase now");
+                context.startForegroundService(new Intent(context, NudgeService.class));
+            }
             return;
         }
 
