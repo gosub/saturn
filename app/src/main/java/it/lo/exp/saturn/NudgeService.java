@@ -94,6 +94,7 @@ public class NudgeService extends Service {
 
             if (resp.reply != null && !resp.reply.isEmpty()) {
                 postNudgeNotification(resp.reply);
+                prefs.edit().putString("pending_nudge", resp.reply).apply();
             }
         } catch (Exception e) {
             Log.e(TAG, "nudge phase error", e);

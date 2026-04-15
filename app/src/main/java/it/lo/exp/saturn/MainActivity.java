@@ -116,6 +116,16 @@ public class MainActivity extends Activity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        String nudge = prefs.getString("pending_nudge", "");
+        if (!nudge.isEmpty()) {
+            prefs.edit().remove("pending_nudge").apply();
+            addBotMessage(nudge);
+        }
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         dotsHandler.removeCallbacks(dotsRunnable);
