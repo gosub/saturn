@@ -102,10 +102,18 @@ public class NudgeService extends Service {
             if (resp.reply != null && !resp.reply.isEmpty()) {
                 postNudgeNotification(resp.reply);
                 appendPendingNudge(prefs, resp.reply);
+                appendNudgeToHistory(prefs, resp.reply);
             }
         } catch (Exception e) {
             Log.e(TAG, "nudge phase error", e);
         }
+    }
+
+    private static void appendNudgeToHistory(SharedPreferences prefs, String reply) {
+        String histJson = prefs.getString("conversation_history", "");
+        java.util.List<AgentClient.Message> history = AgentClient.loadHistory(histJson);
+        String updated = AgentClient.saveHistory(history, null, "[nudge] " + reply);
+        prefs.edit().putString("conversation_history", updated).apply();
     }
 
     private static void appendPendingNudge(SharedPreferences prefs, String message) {
