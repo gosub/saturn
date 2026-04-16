@@ -21,11 +21,13 @@ public class NudgeService extends Service {
     private static final int FOREGROUND_NOTIF_ID = 1;
     private static final int NUDGE_NOTIF_ID = 2;
 
+    private static final long CYCLE_TIMEOUT_MS = 90_000L;
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         startForeground(FOREGROUND_NOTIF_ID, buildCheckingNotification());
         int capturedStartId = startId;
-        new Thread(() -> {
+        Thread worker = new Thread(() -> {
             try {
                 runNudgeCycle();
             } catch (Exception e) {
@@ -34,6 +36,16 @@ public class NudgeService extends Service {
                 stopForeground(true);
                 stopSelf(capturedStartId);
             }
+        });
+        worker.start();
+        new Thread(() -> {
+            try {
+                worker.join(CYCLE_TIMEOUT_MS);
+                if (worker.isAlive()) {
+                    Log.e(TAG, "nudge cycle timed out after " + CYCLE_TIMEOUT_MS + "ms, interrupting");
+                    worker.interrupt();
+                }
+            } catch (InterruptedException ignored) {}
         }).start();
         return START_NOT_STICKY;
     }
