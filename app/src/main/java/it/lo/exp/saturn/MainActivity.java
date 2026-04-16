@@ -242,10 +242,10 @@ public class MainActivity extends Activity {
 
                 } catch (Exception e) {
                     Log.e(TAG, "chat error", e);
-                    final String msg = e.getMessage();
+                    final String msg = friendlyError(e);
                     runOnUiThread(() -> {
                         hideTypingIndicator();
-                        addBotMessage("Error: " + msg);
+                        addBotMessage(msg);
                         setInputEnabled(true);
                     });
                     done = true;
@@ -406,6 +406,22 @@ public class MainActivity extends Activity {
         synchronized (db) { db.saveMessage(m.role, m.content, m.ts); }
         adapter.notifyDataSetChanged();
         chatList.smoothScrollToPosition(messages.size() - 1);
+    }
+
+    private static String friendlyError(Exception e) {
+        String msg = e.getMessage();
+        if (msg == null) return "Something went wrong. Try again.";
+        if (msg.contains("Unable to resolve host") || msg.contains("No address associated"))
+            return "Can't reach the server. Check your internet connection.";
+        if (msg.contains("timeout") || msg.contains("timed out"))
+            return "The request timed out. Try again.";
+        if (msg.contains("401") || msg.contains("User not found") || msg.contains("Authentication"))
+            return "API key rejected. Check your key in Settings.";
+        if (msg.contains("invalid JSON from model"))
+            return "The model returned an unexpected response. Try a different model.";
+        if (msg.contains("API error"))
+            return "Server error. Try again later.";
+        return "Error: " + msg;
     }
 
     private void setInputEnabled(boolean enabled) {
