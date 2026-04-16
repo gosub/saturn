@@ -1,6 +1,7 @@
 package it.lo.exp.saturn;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.InputType;
@@ -72,14 +73,26 @@ public class SettingsActivity extends Activity {
 
         Button clearHistoryBtn = findViewById(R.id.clear_history_btn);
         clearHistoryBtn.setOnClickListener(v ->
-            prefs.edit().remove("conversation_history").apply());
+            new AlertDialog.Builder(this)
+                .setTitle("Clear conversation history")
+                .setMessage("This will erase the chat context sent to the model. Tasks are not affected.")
+                .setPositiveButton("Clear", (d, w) ->
+                    prefs.edit().remove("conversation_history").apply())
+                .setNegativeButton("Cancel", null)
+                .show());
 
         settingsDb = new Database(this);
         Button clearTasksBtn = findViewById(R.id.clear_tasks_btn);
-        clearTasksBtn.setOnClickListener(v -> {
-            settingsDb.clearAllTasks();
-            NudgeScheduler.cancel(this);
-        });
+        clearTasksBtn.setOnClickListener(v ->
+            new AlertDialog.Builder(this)
+                .setTitle("Clear all tasks")
+                .setMessage("This will permanently delete all tasks and cancel all reminders.")
+                .setPositiveButton("Clear", (d, w) -> {
+                    settingsDb.clearAllTasks();
+                    NudgeScheduler.cancel(this);
+                })
+                .setNegativeButton("Cancel", null)
+                .show());
     }
 
     @Override
