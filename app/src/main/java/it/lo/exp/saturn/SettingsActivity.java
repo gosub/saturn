@@ -11,6 +11,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 import java.util.TimeZone;
 
@@ -79,6 +80,7 @@ public class SettingsActivity extends Activity {
                 .setPositiveButton("Clear", (d, w) -> {
                     prefs.edit().remove("conversation_history").apply();
                     settingsDb.clearMessages();
+                    Toast.makeText(this, "Conversation cleared", Toast.LENGTH_SHORT).show();
                 })
                 .setNegativeButton("Cancel", null)
                 .show());
@@ -92,6 +94,7 @@ public class SettingsActivity extends Activity {
                 .setPositiveButton("Clear", (d, w) -> {
                     settingsDb.clearAllTasks();
                     NudgeScheduler.cancel(this);
+                    Toast.makeText(this, "All tasks cleared", Toast.LENGTH_SHORT).show();
                 })
                 .setNegativeButton("Cancel", null)
                 .show());
@@ -129,6 +132,7 @@ public class SettingsActivity extends Activity {
             .putString("schedule", schedule)
             .apply();
 
+        Toast.makeText(this, "Settings saved", Toast.LENGTH_SHORT).show();
         finish();
     }
 }
