@@ -8,9 +8,15 @@ import android.widget.ArrayAdapter;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class ChatAdapter extends ArrayAdapter<ChatMessage> {
+
+    private static final SimpleDateFormat TIME_FMT =
+        new SimpleDateFormat("HH:mm", Locale.getDefault());
 
     private final LayoutInflater inflater;
 
@@ -72,6 +78,8 @@ public class ChatAdapter extends ArrayAdapter<ChatMessage> {
                     convertView = inflater.inflate(layout, parent, false);
                 }
                 ((TextView) convertView.findViewById(R.id.message_text)).setText(msg.content);
+                TextView tsView = convertView.findViewById(R.id.message_ts);
+                tsView.setText(msg.ts > 0 ? TIME_FMT.format(new Date(msg.ts)) : "");
                 return convertView;
             }
         }

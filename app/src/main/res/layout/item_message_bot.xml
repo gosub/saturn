@@ -2,6 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:orientation="vertical"
     android:gravity="start"
     android:paddingStart="12dp"
     android:paddingEnd="60dp"
@@ -17,5 +18,14 @@
         android:textColor="#6d2e46"
         android:textSize="15sp"
         android:lineSpacingMultiplier="1.2" />
+
+    <TextView
+        android:id="@+id/message_ts"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="11sp"
+        android:textColor="#a26769"
+        android:paddingTop="2dp"
+        android:paddingStart="4dp" />
 
 </LinearLayout>
