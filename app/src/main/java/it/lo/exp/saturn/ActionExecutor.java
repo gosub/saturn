@@ -28,6 +28,10 @@ public class ActionExecutor {
                     break;
                 }
                 case "update_task": {
+                    if (db.getTask(a.id) == null) {
+                        Log.w(TAG, "update_task: unknown task id " + a.id);
+                        break;
+                    }
                     if (a.description != null && !a.description.isEmpty()) {
                         db.updateTask(a.id, a.description);
                     }
@@ -43,12 +47,12 @@ public class ActionExecutor {
                     break;
                 }
                 case "complete_task": {
-                    List<Task> tasks = db.getTasks();
-                    boolean recurring = false;
-                    for (Task t : tasks) {
-                        if (t.id == a.id) { recurring = t.recurring; break; }
+                    Task ct = db.getTask(a.id);
+                    if (ct == null) {
+                        Log.w(TAG, "complete_task: unknown task id " + a.id);
+                        break;
                     }
-                    if (recurring) {
+                    if (ct.recurring) {
                         Log.w(TAG, "skipping complete_task on recurring task " + a.id);
                     } else {
                         db.completeTask(a.id);
@@ -56,6 +60,10 @@ public class ActionExecutor {
                     break;
                 }
                 case "delete_task":
+                    if (db.getTask(a.id) == null) {
+                        Log.w(TAG, "delete_task: unknown task id " + a.id);
+                        break;
+                    }
                     db.deleteTask(a.id);
                     break;
                 case "update_schedule":

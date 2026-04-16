@@ -90,6 +90,17 @@ public class Database extends SQLiteOpenHelper {
         getWritableDatabase().delete("tasks", "id = ?", new String[]{String.valueOf(id)});
     }
 
+    public Task getTask(long id) {
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor c = db.query("tasks", null, "id = ?", new String[]{String.valueOf(id)}, null, null, null);
+        try {
+            if (c.moveToFirst()) return rowToTask(c);
+            return null;
+        } finally {
+            c.close();
+        }
+    }
+
     public List<Task> getDueTasks(String nowISO) {
         List<Task> tasks = new ArrayList<>();
         SQLiteDatabase db = getReadableDatabase();
