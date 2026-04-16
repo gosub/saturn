@@ -279,10 +279,11 @@ public class AgentClient {
     }
 
     private static String formatNow(long millis, String timezone) {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss (EEEE)", Locale.ENGLISH);
-        if (timezone != null && !timezone.isEmpty()) {
-            sdf.setTimeZone(TimeZone.getTimeZone(timezone));
-        }
+        TimeZone tz = (timezone != null && !timezone.isEmpty())
+            ? TimeZone.getTimeZone(timezone) : TimeZone.getDefault();
+        // Format: 2026-04-16T09:00:00+02:00 (Wednesday)
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX (EEEE)", Locale.ENGLISH);
+        sdf.setTimeZone(tz);
         return sdf.format(new Date(millis));
     }
 
