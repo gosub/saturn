@@ -1,6 +1,8 @@
 # Saturn ♄
 
-An Android task nudge assistant. You chat with an AI agent to track tasks and commitments; it sends you reminders at the right time.
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+
+An agentic alarm clock for Android — you say what, it handles when.
 
 <img src="docs/screenshot.png" width="320" alt="Saturn screenshot" />
 
