@@ -102,6 +102,7 @@
             android:paddingTop="10dp"
             android:paddingBottom="10dp"
             android:inputType="textCapSentences|textMultiLine"
+            android:imeOptions="actionSend"
             android:maxLines="4"
             android:textSize="16sp" />
 

@@ -87,6 +87,14 @@ public class MainActivity extends Activity {
 
         sendBtn.setOnClickListener(v -> onSend());
 
+        inputField.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_SEND) {
+                onSend();
+                return true;
+            }
+            return false;
+        });
+
         findViewById(R.id.tasks_btn).setOnClickListener(v -> showTasks());
 
         findViewById(R.id.overflow_btn).setOnClickListener(this::showOverflowMenu);

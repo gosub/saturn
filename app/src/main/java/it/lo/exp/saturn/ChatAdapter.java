@@ -1,5 +1,7 @@
 package it.lo.exp.saturn;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -7,6 +9,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -77,7 +80,16 @@ public class ChatAdapter extends ArrayAdapter<ChatMessage> {
                 if (convertView == null) {
                     convertView = inflater.inflate(layout, parent, false);
                 }
-                ((TextView) convertView.findViewById(R.id.message_text)).setText(msg.content);
+                TextView textView = convertView.findViewById(R.id.message_text);
+                textView.setText(msg.content);
+                final String content = msg.content;
+                textView.setOnLongClickListener(v -> {
+                    ClipboardManager cm = (ClipboardManager)
+                        getContext().getSystemService(Context.CLIPBOARD_SERVICE);
+                    cm.setPrimaryClip(ClipData.newPlainText("message", content));
+                    Toast.makeText(getContext(), "Copied", Toast.LENGTH_SHORT).show();
+                    return true;
+                });
                 TextView tsView = convertView.findViewById(R.id.message_ts);
                 tsView.setText(msg.ts > 0 ? TIME_FMT.format(new Date(msg.ts)) : "");
                 return convertView;
