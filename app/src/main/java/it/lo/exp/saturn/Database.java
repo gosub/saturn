@@ -12,7 +12,8 @@ import java.util.List;
 public class Database extends SQLiteOpenHelper {
 
     private static final String DB_NAME = "saturn.db";
-    private static final int DB_VERSION = 1;
+    private static final int DB_VERSION = 2;
+    private static final int MAX_MESSAGES = 200;
 
     public Database(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
@@ -28,10 +29,29 @@ public class Database extends SQLiteOpenHelper {
             "recurring INTEGER NOT NULL DEFAULT 0" +
             ")"
         );
+        db.execSQL(
+            "CREATE TABLE messages (" +
+            "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+            "role INTEGER NOT NULL, " +
+            "content TEXT NOT NULL, " +
+            "ts INTEGER NOT NULL" +
+            ")"
+        );
     }
 
     @Override
-    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {}
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        if (oldVersion < 2) {
+            db.execSQL(
+                "CREATE TABLE messages (" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                "role INTEGER NOT NULL, " +
+                "content TEXT NOT NULL, " +
+                "ts INTEGER NOT NULL" +
+                ")"
+            );
+        }
+    }
 
     public List<Task> getTasks() {
         List<Task> tasks = new ArrayList<>();
@@ -137,6 +157,40 @@ public class Database extends SQLiteOpenHelper {
         }
         c.close();
         return tasks;
+    }
+
+    public void saveMessage(int role, String content, long ts) {
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put("role", role);
+        cv.put("content", content);
+        cv.put("ts", ts);
+        db.insert("messages", null, cv);
+        // Trim to keep only the most recent MAX_MESSAGES
+        db.execSQL(
+            "DELETE FROM messages WHERE id NOT IN " +
+            "(SELECT id FROM messages ORDER BY id DESC LIMIT " + MAX_MESSAGES + ")"
+        );
+    }
+
+    public List<ChatMessage> loadMessages() {
+        List<ChatMessage> list = new ArrayList<>();
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor c = db.query("messages", null, null, null, null, null, "id ASC");
+        while (c.moveToNext()) {
+            int role    = c.getInt(c.getColumnIndexOrThrow("role"));
+            String text = c.getString(c.getColumnIndexOrThrow("content"));
+            long ts     = c.getLong(c.getColumnIndexOrThrow("ts"));
+            ChatMessage m = new ChatMessage(role, text);
+            m.ts = ts;
+            list.add(m);
+        }
+        c.close();
+        return list;
+    }
+
+    public void clearMessages() {
+        getWritableDatabase().delete("messages", null, null);
     }
 
     private Task rowToTask(Cursor c) {

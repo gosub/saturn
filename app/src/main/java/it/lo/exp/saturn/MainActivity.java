@@ -79,6 +79,9 @@ public class MainActivity extends Activity {
         chatList.setAdapter(adapter);
         chatList.setStackFromBottom(true);
 
+        messages.addAll(db.loadMessages());
+        adapter.notifyDataSetChanged();
+
         sendBtn.setOnClickListener(v -> onSend());
 
         findViewById(R.id.tasks_btn).setOnClickListener(v -> showTasks());
@@ -382,19 +385,25 @@ public class MainActivity extends Activity {
     }
 
     private void addUserMessage(String text) {
-        messages.add(new ChatMessage(ChatMessage.ROLE_USER, text));
+        ChatMessage m = new ChatMessage(ChatMessage.ROLE_USER, text);
+        messages.add(m);
+        synchronized (db) { db.saveMessage(m.role, m.content, m.ts); }
         adapter.notifyDataSetChanged();
         chatList.smoothScrollToPosition(messages.size() - 1);
     }
 
     private void addBotMessage(String text) {
-        messages.add(new ChatMessage(ChatMessage.ROLE_BOT, text));
+        ChatMessage m = new ChatMessage(ChatMessage.ROLE_BOT, text);
+        messages.add(m);
+        synchronized (db) { db.saveMessage(m.role, m.content, m.ts); }
         adapter.notifyDataSetChanged();
         chatList.smoothScrollToPosition(messages.size() - 1);
     }
 
     private void addSystemMessage(String text) {
-        messages.add(new ChatMessage(ChatMessage.ROLE_SYSTEM, text));
+        ChatMessage m = new ChatMessage(ChatMessage.ROLE_SYSTEM, text);
+        messages.add(m);
+        synchronized (db) { db.saveMessage(m.role, m.content, m.ts); }
         adapter.notifyDataSetChanged();
         chatList.smoothScrollToPosition(messages.size() - 1);
     }

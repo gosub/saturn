@@ -8,12 +8,14 @@ public class ChatMessage {
 
     public final int role;
     public String content;
-    public int progress;    // 0-100, used when maxProgress > 0
-    public int maxProgress; // > 0 means countdown bar is visible
+    public long ts;          // epoch millis, set on creation
+    public int progress;     // 0-100, used when maxProgress > 0
+    public int maxProgress;  // > 0 means countdown bar is visible
     public Runnable onCancel; // set during retry countdown
 
     public ChatMessage(int role, String content) {
         this.role = role;
         this.content = content;
+        this.ts = System.currentTimeMillis();
     }
 }

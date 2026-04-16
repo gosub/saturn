@@ -76,8 +76,10 @@ public class SettingsActivity extends Activity {
             new AlertDialog.Builder(this)
                 .setTitle("Clear conversation history")
                 .setMessage("This will erase the chat context sent to the model. Tasks are not affected.")
-                .setPositiveButton("Clear", (d, w) ->
-                    prefs.edit().remove("conversation_history").apply())
+                .setPositiveButton("Clear", (d, w) -> {
+                    prefs.edit().remove("conversation_history").apply();
+                    settingsDb.clearMessages();
+                })
                 .setNegativeButton("Cancel", null)
                 .show());
 
