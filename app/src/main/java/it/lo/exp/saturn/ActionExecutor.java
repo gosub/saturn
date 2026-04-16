@@ -4,6 +4,7 @@ import android.content.SharedPreferences;
 import android.util.Log;
 
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -71,6 +72,20 @@ public class ActionExecutor {
                         prefs.edit().putString("schedule", a.schedule).apply();
                     }
                     break;
+                case "snooze_task": {
+                    if (db.getTask(a.id) == null) {
+                        Log.w(TAG, "snooze_task: unknown task id " + a.id);
+                        break;
+                    }
+                    int mins = a.minutes > 0 ? a.minutes : 30;
+                    Calendar cal = Calendar.getInstance();
+                    cal.add(Calendar.MINUTE, mins);
+                    String snoozeTime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
+                        .format(cal.getTime());
+                    db.setNextNudgeAt(a.id, snoozeTime);
+                    Log.d(TAG, "snooze_task " + a.id + " by " + mins + " min → " + snoozeTime);
+                    break;
+                }
                 default:
                     Log.w(TAG, "unknown action type: " + a.type);
             }

@@ -45,6 +45,7 @@ public class AgentClient {
         @SerializedName("next_nudge_at") public String nextNudgeAt;
         public String schedule;
         public boolean recurring;
+        public int minutes; // for snooze_task
     }
 
     public static class AgentResponse {
@@ -193,6 +194,7 @@ public class AgentClient {
         sb.append("  {\"type\": \"complete_task\",   \"id\": N}\n");
         sb.append("  {\"type\": \"delete_task\",     \"id\": N}\n");
         sb.append("  {\"type\": \"update_schedule\", \"schedule\": \"...\"}\n");
+        sb.append("  {\"type\": \"snooze_task\",      \"id\": N, \"minutes\": 30}\n");
         sb.append("Always use numeric id from the task list. next_nudge_at is required for add_task.\n");
         sb.append("next_nudge_at must be ISO 8601 (e.g. 2026-03-21T09:00:00). Respect the user's schedule.\n");
         sb.append("Set recurring: true for habitual/repeating tasks.\n");
@@ -233,7 +235,7 @@ public class AgentClient {
         sb.append("Never leave a task without a next_nudge_at after nudging.\n");
         sb.append("If no nudge is appropriate right now, return empty reply.\n\n");
         sb.append("Respond: {\"reply\": \"...\", \"actions\": [...]}\n");
-        sb.append("Actions: update_task (id, description optional, next_nudge_at optional), complete_task (id), delete_task (id).\n");
+        sb.append("Actions: update_task (id, description optional, next_nudge_at optional), complete_task (id), delete_task (id), snooze_task (id, minutes).\n");
         return sb.toString();
     }
 
