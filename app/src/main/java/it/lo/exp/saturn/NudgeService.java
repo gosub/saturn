@@ -81,7 +81,7 @@ public class NudgeService extends Service {
                     appendPendingNudge(prefs, warn.toString());
                 }
             }
-            NudgeScheduler.scheduleNext(this, db);
+            NudgeScheduler.scheduleNext(this, db, timezone);
         } finally {
             db.close();
         }

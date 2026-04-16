@@ -94,7 +94,7 @@ public class MainActivity extends Activity {
             }
         }
 
-        NudgeScheduler.scheduleNext(this, db);
+        NudgeScheduler.scheduleNext(this, db, prefs.getString("timezone", ""));
         checkExactAlarmPermission();
     }
 
@@ -175,7 +175,7 @@ public class MainActivity extends Activity {
 
                     synchronized (db) {
                         ActionExecutor.execute(resp.actions, db, prefs);
-                        NudgeScheduler.scheduleNext(MainActivity.this, db);
+                        NudgeScheduler.scheduleNext(MainActivity.this, db, prefs.getString("timezone", ""));
                     }
 
                     String reply = (resp.reply != null && !resp.reply.isEmpty())
