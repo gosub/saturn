@@ -3,7 +3,10 @@ package it.lo.exp.saturn;
 import android.content.SharedPreferences;
 import android.util.Log;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class ActionExecutor {
 
@@ -16,8 +19,11 @@ public class ActionExecutor {
             switch (a.type != null ? a.type : "") {
                 case "add_task": {
                     Task t = db.addTask(a.description, a.recurring);
-                    if (a.nextNudgeAt != null && !a.nextNudgeAt.isEmpty()) {
-                        db.setNextNudgeAt(t.id, a.nextNudgeAt);
+                    String addTime = validatedFutureTime(a.nextNudgeAt);
+                    if (addTime != null) {
+                        db.setNextNudgeAt(t.id, addTime);
+                    } else if (a.nextNudgeAt != null && !a.nextNudgeAt.isEmpty()) {
+                        Log.w(TAG, "add_task: rejected invalid/past next_nudge_at: " + a.nextNudgeAt);
                     }
                     break;
                 }
@@ -25,8 +31,11 @@ public class ActionExecutor {
                     if (a.description != null && !a.description.isEmpty()) {
                         db.updateTask(a.id, a.description);
                     }
-                    if (a.nextNudgeAt != null && !a.nextNudgeAt.isEmpty()) {
-                        db.setNextNudgeAt(a.id, a.nextNudgeAt);
+                    String updTime = validatedFutureTime(a.nextNudgeAt);
+                    if (updTime != null) {
+                        db.setNextNudgeAt(a.id, updTime);
+                    } else if (a.nextNudgeAt != null && !a.nextNudgeAt.isEmpty()) {
+                        Log.w(TAG, "update_task " + a.id + ": rejected invalid/past next_nudge_at: " + a.nextNudgeAt);
                     }
                     if (a.recurring) {
                         db.setRecurring(a.id, true);
@@ -57,6 +66,18 @@ public class ActionExecutor {
                 default:
                     Log.w(TAG, "unknown action type: " + a.type);
             }
+        }
+    }
+
+    /** Returns the time string if it parses as ISO 8601 and is in the future, else null. */
+    private static String validatedFutureTime(String s) {
+        if (s == null || s.isEmpty()) return null;
+        try {
+            Date d = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).parse(s);
+            if (d != null && d.getTime() > System.currentTimeMillis()) return s;
+            return null;
+        } catch (Exception e) {
+            return null;
         }
     }
 }
