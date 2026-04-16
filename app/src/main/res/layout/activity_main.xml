@@ -51,17 +51,33 @@
     </LinearLayout>
 
     <!-- Chat messages -->
-    <ListView
-        android:id="@+id/chat_list"
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:divider="@null"
-        android:dividerHeight="0dp"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp"
-        android:clipToPadding="false"
-        android:transcriptMode="alwaysScroll" />
+        android:layout_weight="1">
+
+        <ListView
+            android:id="@+id/chat_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:divider="@null"
+            android:dividerHeight="0dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:clipToPadding="false"
+            android:transcriptMode="alwaysScroll" />
+
+        <TextView
+            android:id="@+id/empty_hint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="Tell Saturn what you need to do."
+            android:textColor="#a26769"
+            android:textSize="15sp"
+            android:visibility="gone" />
+
+    </FrameLayout>
 
     <!-- Input bar -->
     <LinearLayout

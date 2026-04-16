@@ -38,6 +38,7 @@ public class MainActivity extends Activity {
     private static final String[] DOTS = {"\u25cf  \u25cb  \u25cb", "\u25cb  \u25cf  \u25cb", "\u25cb  \u25cb  \u25cf"};
 
     private ListView chatList;
+    private android.widget.TextView emptyHint;
     private EditText inputField;
     private Button sendBtn;
     private ChatAdapter adapter;
@@ -72,6 +73,7 @@ public class MainActivity extends Activity {
         prefs = getSharedPreferences("saturn", MODE_PRIVATE);
 
         chatList   = findViewById(R.id.chat_list);
+        emptyHint  = findViewById(R.id.empty_hint);
         inputField = findViewById(R.id.input_field);
         sendBtn    = findViewById(R.id.send_btn);
 
@@ -81,6 +83,7 @@ public class MainActivity extends Activity {
 
         messages.addAll(db.loadMessages());
         adapter.notifyDataSetChanged();
+        updateEmptyHint();
 
         sendBtn.setOnClickListener(v -> onSend());
 
@@ -389,6 +392,7 @@ public class MainActivity extends Activity {
         messages.add(m);
         synchronized (db) { db.saveMessage(m.role, m.content, m.ts); }
         adapter.notifyDataSetChanged();
+        updateEmptyHint();
         chatList.smoothScrollToPosition(messages.size() - 1);
     }
 
@@ -397,6 +401,7 @@ public class MainActivity extends Activity {
         messages.add(m);
         synchronized (db) { db.saveMessage(m.role, m.content, m.ts); }
         adapter.notifyDataSetChanged();
+        updateEmptyHint();
         chatList.smoothScrollToPosition(messages.size() - 1);
     }
 
@@ -405,7 +410,12 @@ public class MainActivity extends Activity {
         messages.add(m);
         synchronized (db) { db.saveMessage(m.role, m.content, m.ts); }
         adapter.notifyDataSetChanged();
+        updateEmptyHint();
         chatList.smoothScrollToPosition(messages.size() - 1);
+    }
+
+    private void updateEmptyHint() {
+        emptyHint.setVisibility(messages.isEmpty() ? android.view.View.VISIBLE : android.view.View.GONE);
     }
 
     private static String friendlyError(Exception e) {
