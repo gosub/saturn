@@ -17,7 +17,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Scanner;
-import java.util.TimeZone;
 
 public class AgentClient {
 
@@ -160,8 +159,8 @@ public class AgentClient {
     // ---- Prompt builders ----
 
     public static String buildChatPrompt(String language, String schedule,
-                                          List<Task> tasks, long nowMillis, String timezone) {
-        String now = formatNow(nowMillis, timezone);
+                                          List<Task> tasks, long nowMillis) {
+        String now = formatNow(nowMillis);
         StringBuilder sb = new StringBuilder();
         sb.append("You are Saturn, an intelligent task and nudge assistant.\n");
         sb.append("You help the user track tasks, remember commitments, and get things done.\n");
@@ -203,8 +202,8 @@ public class AgentClient {
     }
 
     public static String buildNudgePrompt(String language, String schedule,
-                                           List<Task> tasks, long nowMillis, String timezone) {
-        String now = formatNow(nowMillis, timezone);
+                                           List<Task> tasks, long nowMillis) {
+        String now = formatNow(nowMillis);
         StringBuilder sb = new StringBuilder();
         sb.append("You are Saturn, a nudge agent.\n");
         sb.append("Current time: ").append(now).append("\n");
@@ -280,12 +279,9 @@ public class AgentClient {
         return s;
     }
 
-    private static String formatNow(long millis, String timezone) {
-        TimeZone tz = (timezone != null && !timezone.isEmpty())
-            ? TimeZone.getTimeZone(timezone) : TimeZone.getDefault();
+    private static String formatNow(long millis) {
         // Format: 2026-04-16T09:00:00+02:00 (Wednesday)
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX (EEEE)", Locale.ENGLISH);
-        sdf.setTimeZone(tz);
         return sdf.format(new Date(millis));
     }
 

@@ -108,7 +108,7 @@ public class MainActivity extends Activity {
             }
         }
 
-        NudgeScheduler.scheduleNext(this, db, prefs.getString("timezone", ""));
+        NudgeScheduler.scheduleNext(this, db);
         checkExactAlarmPermission();
     }
 
@@ -167,7 +167,6 @@ public class MainActivity extends Activity {
         executor.execute(() -> {
             Log.d(TAG, "chat: user=\"" + text + "\"");
             String model    = prefs.getString("model", "openai/gpt-oss-120b:free");
-            String timezone = prefs.getString("timezone", "");
             String language = prefs.getString("language", "en");
             String schedule = prefs.getString("schedule", "");
             String histJson = prefs.getString("conversation_history", "");
@@ -179,7 +178,7 @@ public class MainActivity extends Activity {
                 tasks = db.getTasks();
             }
             systemPrompt = AgentClient.buildChatPrompt(
-                language, schedule, tasks, System.currentTimeMillis(), timezone);
+                language, schedule, tasks, System.currentTimeMillis());
 
             boolean done = false;
             while (!done) {
@@ -189,7 +188,7 @@ public class MainActivity extends Activity {
 
                     synchronized (db) {
                         ActionExecutor.execute(resp.actions, db, prefs);
-                        NudgeScheduler.scheduleNext(MainActivity.this, db, prefs.getString("timezone", ""));
+                        NudgeScheduler.scheduleNext(MainActivity.this, db);
                     }
 
                     String reply = (resp.reply != null && !resp.reply.isEmpty())
@@ -304,10 +303,7 @@ public class MainActivity extends Activity {
     }
 
     private void showPeriodSummary(boolean week) {
-        String tzId = prefs.getString("timezone", "");
-        TimeZone zone = (tzId != null && !tzId.isEmpty())
-            ? TimeZone.getTimeZone(tzId) : TimeZone.getDefault();
-        Calendar cal = Calendar.getInstance(zone);
+        Calendar cal = Calendar.getInstance();
         cal.set(Calendar.HOUR_OF_DAY, 0);
         cal.set(Calendar.MINUTE, 0);
         cal.set(Calendar.SECOND, 0);
@@ -318,7 +314,6 @@ public class MainActivity extends Activity {
             cal.add(Calendar.DAY_OF_MONTH, toMonday);
         }
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
-        sdf.setTimeZone(zone);
         String from = sdf.format(cal.getTime());
         if (week) cal.add(Calendar.DAY_OF_MONTH, 6);
         cal.set(Calendar.HOUR_OF_DAY, 23);
@@ -352,7 +347,7 @@ public class MainActivity extends Activity {
     private void showDebug() {
         StringBuilder sb = new StringBuilder("Debug:\n\n");
         sb.append("model:    ").append(prefs.getString("model", "\u2014")).append("\n");
-        sb.append("timezone: ").append(prefs.getString("timezone", "\u2014")).append("\n");
+        sb.append("timezone: ").append(TimeZone.getDefault().getID()).append(" (device)\n");
         sb.append("language: ").append(prefs.getString("language", "\u2014")).append("\n");
         sb.append("schedule: ").append(prefs.getString("schedule", "not set")).append("\n");
         List<AgentClient.Message> hist = AgentClient.loadHistory(

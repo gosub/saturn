@@ -9,13 +9,12 @@ import android.util.Log;
 
 import java.text.SimpleDateFormat;
 import java.util.Locale;
-import java.util.TimeZone;
 
 public class NudgeScheduler {
 
     private static final String TAG = "Saturn";
 
-    public static void scheduleNext(Context context, Database db, String timezone) {
+    public static void scheduleNext(Context context, Database db) {
         String nextTime = db.getNextScheduledTime();
         AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         PendingIntent pi = buildPendingIntent(context);
@@ -29,9 +28,6 @@ public class NudgeScheduler {
         long triggerMs;
         try {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
-            if (timezone != null && !timezone.isEmpty()) {
-                sdf.setTimeZone(TimeZone.getTimeZone(timezone));
-            }
             triggerMs = sdf.parse(nextTime).getTime();
         } catch (Exception e) {
             Log.e(TAG, "failed to parse next nudge time: " + nextTime, e);

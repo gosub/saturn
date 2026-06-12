@@ -74,25 +74,6 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Timezone"
-            android:textColor="#a26769"
-            android:textSize="13sp"
-            android:paddingBottom="4dp" />
-        <EditText
-            android:id="@+id/field_timezone"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:inputType="text"
-            android:textColor="#6d2e46"
-            android:background="@drawable/input_bg"
-            android:padding="12dp"
-            android:layout_marginBottom="16dp"
-            android:hint="e.g. Europe/Rome"
-            android:textColorHint="#a26769" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
             android:text="Language"
             android:textColor="#a26769"
             android:textSize="13sp"

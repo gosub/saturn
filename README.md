@@ -27,7 +27,6 @@ An agentic alarm clock for Android — you say what, it handles when.
 |-------|-------------|
 | API key | OpenRouter key (`sk-or-v1-...`) |
 | Model | Any model available on OpenRouter. Default: `openai/gpt-oss-120b:free` |
-| Timezone | Your local timezone (e.g. `Europe/Rome`) |
 | Language | English or Italian |
 | Schedule | Freeform description of your availability (e.g. `weekdays 9–13 and 15–19`) |
 
@@ -47,7 +46,7 @@ make logcat   # stream filtered logs
 | Component | Role |
 |-----------|------|
 | `MainActivity` | Chat UI |
-| `SettingsActivity` | API key, model, timezone, language, schedule |
+| `SettingsActivity` | API key, model, language, schedule |
 | `Database` | SQLite task store |
 | `AgentClient` | HTTP to OpenRouter, prompt builders, JSON parsing |
 | `ActionExecutor` | Applies agent actions (add/update/complete/delete task) |

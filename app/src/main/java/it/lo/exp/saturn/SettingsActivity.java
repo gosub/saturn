@@ -13,12 +13,10 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Toast;
 
-import java.util.TimeZone;
-
 public class SettingsActivity extends Activity {
 
     private SharedPreferences prefs;
-    private EditText apiKeyField, modelField, timezoneField, scheduleField;
+    private EditText apiKeyField, modelField, scheduleField;
     private Spinner languageSpinner;
     private String selectedLanguage = "en";
     private Database settingsDb;
@@ -32,7 +30,6 @@ public class SettingsActivity extends Activity {
 
         apiKeyField   = findViewById(R.id.field_api_key);
         modelField    = findViewById(R.id.field_model);
-        timezoneField = findViewById(R.id.field_timezone);
         scheduleField = findViewById(R.id.field_schedule);
         languageSpinner   = findViewById(R.id.spinner_language);
 
@@ -55,7 +52,6 @@ public class SettingsActivity extends Activity {
 
         apiKeyField.setText(KeystoreHelper.readApiKey(prefs));
         modelField.setText(prefs.getString("model", "openai/gpt-oss-120b:free"));
-        timezoneField.setText(prefs.getString("timezone", TimeZone.getDefault().getID()));
         scheduleField.setText(prefs.getString("schedule", ""));
 
         Button toggleKeyBtn = findViewById(R.id.toggle_key_visibility);
@@ -109,11 +105,9 @@ public class SettingsActivity extends Activity {
     private void save() {
         String apiKey   = apiKeyField.getText().toString().trim();
         String model    = modelField.getText().toString().trim();
-        String timezone = timezoneField.getText().toString().trim();
         String schedule = scheduleField.getText().toString().trim();
 
-        if (model.isEmpty())    model    = "openai/gpt-oss-120b:free";
-        if (timezone.isEmpty()) timezone = TimeZone.getDefault().getID();
+        if (model.isEmpty()) model = "openai/gpt-oss-120b:free";
 
         String storedKey = apiKey;
         if (!apiKey.isEmpty()) {
@@ -127,9 +121,9 @@ public class SettingsActivity extends Activity {
         prefs.edit()
             .putString("api_key",  storedKey)
             .putString("model",    model)
-            .putString("timezone", timezone)
             .putString("language", selectedLanguage)
             .putString("schedule", schedule)
+            .remove("timezone")
             .apply();
 
         Toast.makeText(this, "Settings saved", Toast.LENGTH_SHORT).show();

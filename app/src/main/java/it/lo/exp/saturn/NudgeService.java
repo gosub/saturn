@@ -64,7 +64,6 @@ public class NudgeService extends Service {
         }
 
         String model    = prefs.getString("model", "openai/gpt-oss-120b:free");
-        String timezone = prefs.getString("timezone", "");
         String language = prefs.getString("language", "en");
         String schedule = prefs.getString("schedule", "");
 
@@ -77,7 +76,7 @@ public class NudgeService extends Service {
             List<Task> due = db.getDueTasks(nowISO);
             if (!due.isEmpty()) {
                 Log.d(TAG, "nudge phase: " + due.size() + " due tasks");
-                runNudgePhase(db, prefs, apiKey, model, language, schedule, timezone,
+                runNudgePhase(db, prefs, apiKey, model, language, schedule,
                               due, nowMillis, nowISO);
                 // Always clear still-due tasks after the phase, even if it failed,
                 // so a past next_nudge_at never causes an immediate-refire loop.
@@ -93,7 +92,7 @@ public class NudgeService extends Service {
                     appendPendingNudge(prefs, warn.toString());
                 }
             }
-            NudgeScheduler.scheduleNext(this, db, timezone);
+            NudgeScheduler.scheduleNext(this, db);
         } finally {
             db.close();
         }
@@ -101,10 +100,10 @@ public class NudgeService extends Service {
 
     private void runNudgePhase(Database db, SharedPreferences prefs,
                                 String apiKey, String model,
-                                String language, String schedule, String timezone,
+                                String language, String schedule,
                                 List<Task> due, long nowMillis, String nowISO) {
         try {
-            String prompt = AgentClient.buildNudgePrompt(language, schedule, due, nowMillis, timezone);
+            String prompt = AgentClient.buildNudgePrompt(language, schedule, due, nowMillis);
             String trigger = "Nudge check at " + nowISO + ". " + due.size() + " task(s) due.";
 
             AgentClient.AgentResponse resp = new AgentClient()
