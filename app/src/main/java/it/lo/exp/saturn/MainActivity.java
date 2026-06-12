@@ -108,6 +108,12 @@ public class MainActivity extends Activity {
 
         NudgeScheduler.scheduleNext(this, db);
         checkExactAlarmPermission();
+
+        if (KeystoreHelper.readApiKey(prefs).isEmpty()) {
+            android.widget.Toast.makeText(this,
+                "Set your OpenRouter API key to start", android.widget.Toast.LENGTH_LONG).show();
+            startActivity(new Intent(this, SettingsActivity.class));
+        }
     }
 
     private void checkExactAlarmPermission() {
