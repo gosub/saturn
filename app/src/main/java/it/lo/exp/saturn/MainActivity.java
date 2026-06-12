@@ -187,8 +187,9 @@ public class MainActivity extends Activity {
                     AgentClient.AgentResponse resp = new AgentClient()
                         .chat(apiKey, model, systemPrompt, history, null);
 
+                    List<String> receipts;
                     synchronized (db) {
-                        ActionExecutor.execute(resp.actions, db, prefs);
+                        receipts = ActionExecutor.execute(resp.actions, db, prefs);
                         NudgeScheduler.scheduleNext(MainActivity.this, db);
                     }
 
@@ -199,6 +200,9 @@ public class MainActivity extends Activity {
                     runOnUiThread(() -> {
                         hideTypingIndicator();
                         addBotMessage(reply);
+                        if (!receipts.isEmpty()) {
+                            addSystemMessage(String.join("\n", receipts));
+                        }
                         setInputEnabled(true);
                     });
                     done = true;

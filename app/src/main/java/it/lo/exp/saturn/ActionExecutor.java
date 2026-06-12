@@ -4,6 +4,7 @@ import android.content.SharedPreferences;
 import android.util.Log;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -13,8 +14,12 @@ public class ActionExecutor {
 
     private static final String TAG = "Saturn";
 
-    public static void execute(List<AgentClient.Action> actions, Database db, SharedPreferences prefs) {
-        if (actions == null) return;
+    /** Applies the agent's actions and returns one receipt line per action,
+     *  describing what actually happened in the database (not what the model
+     *  claims in its reply). */
+    public static List<String> execute(List<AgentClient.Action> actions, Database db, SharedPreferences prefs) {
+        List<String> receipts = new ArrayList<>();
+        if (actions == null) return receipts;
         for (AgentClient.Action a : actions) {
             Log.d(TAG, "action: type=" + a.type + " id=" + a.id + " desc=" + a.description);
             switch (a.type != null ? a.type : "") {
@@ -23,14 +28,20 @@ public class ActionExecutor {
                     String addTime = validatedFutureTime(a.nextNudgeAt);
                     if (addTime != null) {
                         db.setNextNudgeAt(t.id, addTime);
+                        receipts.add("✓ added: " + a.description + " → " + addTime);
                     } else if (a.nextNudgeAt != null && !a.nextNudgeAt.isEmpty()) {
                         Log.w(TAG, "add_task: rejected invalid/past next_nudge_at: " + a.nextNudgeAt);
+                        receipts.add("⚠ added without reminder (time rejected: "
+                            + a.nextNudgeAt + "): " + a.description);
+                    } else {
+                        receipts.add("⚠ added without reminder: " + a.description);
                     }
                     break;
                 }
                 case "update_task": {
                     if (db.getTask(a.id) == null) {
                         Log.w(TAG, "update_task: unknown task id " + a.id);
+                        receipts.add("⚠ update failed: unknown task " + a.id);
                         break;
                     }
                     if (a.description != null && !a.description.isEmpty()) {
@@ -45,36 +56,55 @@ public class ActionExecutor {
                     if (a.recurring != null) {
                         db.setRecurring(a.id, a.recurring);
                     }
+                    Task t = db.getTask(a.id);
+                    if (updTime != null) {
+                        receipts.add("✓ updated: " + t.description + " → " + updTime);
+                    } else if (a.nextNudgeAt != null && !a.nextNudgeAt.isEmpty()) {
+                        receipts.add("⚠ updated, but time rejected ("
+                            + a.nextNudgeAt + "): " + t.description);
+                    } else {
+                        receipts.add("✓ updated: " + t.description);
+                    }
                     break;
                 }
                 case "complete_task": {
                     Task ct = db.getTask(a.id);
                     if (ct == null) {
                         Log.w(TAG, "complete_task: unknown task id " + a.id);
+                        receipts.add("⚠ complete failed: unknown task " + a.id);
                         break;
                     }
                     if (ct.recurring) {
                         Log.w(TAG, "skipping complete_task on recurring task " + a.id);
+                        receipts.add("⚠ not completed (recurring): " + ct.description);
                     } else {
                         db.completeTask(a.id);
+                        receipts.add("✓ completed: " + ct.description);
                     }
                     break;
                 }
-                case "delete_task":
-                    if (db.getTask(a.id) == null) {
+                case "delete_task": {
+                    Task dt = db.getTask(a.id);
+                    if (dt == null) {
                         Log.w(TAG, "delete_task: unknown task id " + a.id);
+                        receipts.add("⚠ delete failed: unknown task " + a.id);
                         break;
                     }
                     db.deleteTask(a.id);
+                    receipts.add("✓ deleted: " + dt.description);
                     break;
+                }
                 case "update_schedule":
                     if (a.schedule != null) {
                         prefs.edit().putString("schedule", a.schedule).apply();
+                        receipts.add("✓ schedule updated: " + a.schedule);
                     }
                     break;
                 case "snooze_task": {
-                    if (db.getTask(a.id) == null) {
+                    Task st = db.getTask(a.id);
+                    if (st == null) {
                         Log.w(TAG, "snooze_task: unknown task id " + a.id);
+                        receipts.add("⚠ snooze failed: unknown task " + a.id);
                         break;
                     }
                     int mins = a.minutes > 0 ? a.minutes : 30;
@@ -84,12 +114,14 @@ public class ActionExecutor {
                         .format(cal.getTime());
                     db.setNextNudgeAt(a.id, snoozeTime);
                     Log.d(TAG, "snooze_task " + a.id + " by " + mins + " min → " + snoozeTime);
+                    receipts.add("✓ snoozed " + mins + " min: " + st.description);
                     break;
                 }
                 default:
                     Log.w(TAG, "unknown action type: " + a.type);
             }
         }
+        return receipts;
     }
 
     /** Returns the time string if it parses as ISO 8601 and is in the future, else null. */
