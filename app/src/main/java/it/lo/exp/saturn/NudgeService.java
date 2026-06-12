@@ -19,7 +19,7 @@ public class NudgeService extends Service {
 
     private static final String TAG = "Saturn";
     private static final int FOREGROUND_NOTIF_ID = 1;
-    private static final int NUDGE_NOTIF_ID = 2;
+    static final int NUDGE_NOTIF_ID = 2;
 
     private static final long CYCLE_TIMEOUT_MS = 90_000L;
     private static final int RETRY_MINUTES = 30;
@@ -111,7 +111,7 @@ public class NudgeService extends Service {
 
         if (fails == 1) {
             String raw = rawReminderText(due);
-            postNudgeNotification(raw);
+            postNudgeNotification(raw, singleTask(due));
             saveNudgeMessage(db, raw + "\n(I couldn\u2019t reach the model, this is a raw reminder.)");
         }
 
@@ -123,7 +123,7 @@ public class NudgeService extends Service {
                 warn.append("\n  \u2022 ").append(t.description);
             }
             warn.append("\nTell me when to remind you again.");
-            postNudgeNotification(warn.toString());
+            postNudgeNotification(warn.toString(), singleTask(due));
             db.saveMessage(ChatMessage.ROLE_BOT, warn.toString(), System.currentTimeMillis());
         } else {
             String retryAt = isoPlusMinutes(nowMillis, RETRY_MINUTES);
@@ -141,7 +141,7 @@ public class NudgeService extends Service {
         return sb.toString();
     }
 
-    private static String isoPlusMinutes(long baseMillis, int minutes) {
+    static String isoPlusMinutes(long baseMillis, int minutes) {
         return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
             .format(new Date(baseMillis + minutes * 60_000L));
     }
@@ -159,7 +159,7 @@ public class NudgeService extends Service {
             ActionExecutor.execute(resp.actions, db, prefs);
 
             if (resp.reply != null && !resp.reply.isEmpty()) {
-                postNudgeNotification(resp.reply);
+                postNudgeNotification(resp.reply, singleTask(due));
                 saveNudgeMessage(db, resp.reply);
             }
             return true;
@@ -188,23 +188,41 @@ public class NudgeService extends Service {
             .build();
     }
 
-    private void postNudgeNotification(String text) {
+    /** With exactly one due task the actions are unambiguous; otherwise none. */
+    private static Task singleTask(List<Task> due) {
+        return due.size() == 1 ? due.get(0) : null;
+    }
+
+    private void postNudgeNotification(String text, Task actionTask) {
         Intent openIntent = new Intent(this, MainActivity.class);
         openIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pi = PendingIntent.getActivity(this, 0, openIntent,
             PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
-        Notification notif = new Notification.Builder(this, SaturnApp.CHANNEL_NUDGE)
+        Notification.Builder builder = new Notification.Builder(this, SaturnApp.CHANNEL_NUDGE)
             .setContentTitle("Saturn")
             .setContentText(text)
             .setStyle(new Notification.BigTextStyle().bigText(text))
             .setSmallIcon(android.R.drawable.ic_popup_reminder)
             .setContentIntent(pi)
-            .setAutoCancel(true)
-            .build();
+            .setAutoCancel(true);
+
+        if (actionTask != null) {
+            builder.addAction(buildAction(NudgeActionReceiver.ACTION_DONE, "Done", actionTask.id, 100));
+            builder.addAction(buildAction(NudgeActionReceiver.ACTION_SNOOZE, "Snooze 30m", actionTask.id, 200));
+        }
 
         NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        nm.notify(NUDGE_NOTIF_ID, notif);
+        nm.notify(NUDGE_NOTIF_ID, builder.build());
         Log.d(TAG, "nudge notification posted");
+    }
+
+    private Notification.Action buildAction(String action, String label, long taskId, int requestCode) {
+        Intent intent = new Intent(this, NudgeActionReceiver.class);
+        intent.setAction(action);
+        intent.putExtra(NudgeActionReceiver.EXTRA_TASK_ID, taskId);
+        PendingIntent pi = PendingIntent.getBroadcast(this, requestCode, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        return new Notification.Action.Builder(null, label, pi).build();
     }
 }
