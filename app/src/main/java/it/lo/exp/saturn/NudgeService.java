@@ -71,31 +71,27 @@ public class NudgeService extends Service {
         String nowISO = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
             .format(new Date(nowMillis));
 
-        Database db = new Database(this);
-        try {
-            List<Task> due = db.getDueTasks(nowISO);
-            if (!due.isEmpty()) {
-                Log.d(TAG, "nudge phase: " + due.size() + " due tasks");
-                runNudgePhase(db, prefs, apiKey, model, language, schedule,
-                              due, nowMillis, nowISO);
-                // Always clear still-due tasks after the phase, even if it failed,
-                // so a past next_nudge_at never causes an immediate-refire loop.
-                List<Task> stillDue = db.getDueTasks(nowISO);
-                for (Task t : stillDue) {
-                    Log.d(TAG, "clearing unresolved due task " + t.id);
-                    db.setNextNudgeAt(t.id, null);
-                }
-                if (!stillDue.isEmpty()) {
-                    StringBuilder warn = new StringBuilder("⚠ No reminder set for:");
-                    for (Task t : stillDue) warn.append("\n  \u2022 ").append(t.description);
-                    warn.append("\nTell me when to remind you again.");
-                    appendPendingNudge(prefs, warn.toString());
-                }
+        Database db = Database.get(this);
+        List<Task> due = db.getDueTasks(nowISO);
+        if (!due.isEmpty()) {
+            Log.d(TAG, "nudge phase: " + due.size() + " due tasks");
+            runNudgePhase(db, prefs, apiKey, model, language, schedule,
+                          due, nowMillis, nowISO);
+            // Always clear still-due tasks after the phase, even if it failed,
+            // so a past next_nudge_at never causes an immediate-refire loop.
+            List<Task> stillDue = db.getDueTasks(nowISO);
+            for (Task t : stillDue) {
+                Log.d(TAG, "clearing unresolved due task " + t.id);
+                db.setNextNudgeAt(t.id, null);
             }
-            NudgeScheduler.scheduleNext(this, db);
-        } finally {
-            db.close();
+            if (!stillDue.isEmpty()) {
+                StringBuilder warn = new StringBuilder("⚠ No reminder set for:");
+                for (Task t : stillDue) warn.append("\n  \u2022 ").append(t.description);
+                warn.append("\nTell me when to remind you again.");
+                appendPendingNudge(prefs, warn.toString());
+            }
         }
+        NudgeScheduler.scheduleNext(this, db);
     }
 
     private void runNudgePhase(Database db, SharedPreferences prefs,

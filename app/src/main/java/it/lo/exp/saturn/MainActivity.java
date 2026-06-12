@@ -69,7 +69,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        db = new Database(this);
+        db = Database.get(this);
         prefs = getSharedPreferences("saturn", MODE_PRIVATE);
 
         chatList   = findViewById(R.id.chat_list);
@@ -146,7 +146,6 @@ public class MainActivity extends Activity {
         super.onDestroy();
         dotsHandler.removeCallbacks(dotsRunnable);
         executor.shutdown();
-        db.close();
     }
 
     private void onSend() {

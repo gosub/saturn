@@ -15,7 +15,17 @@ public class Database extends SQLiteOpenHelper {
     private static final int DB_VERSION = 2;
     private static final int MAX_MESSAGES = 200;
 
-    public Database(Context context) {
+    private static Database instance;
+
+    /** Process-wide instance, never closed. SQLite serializes access internally. */
+    public static synchronized Database get(Context context) {
+        if (instance == null) {
+            instance = new Database(context.getApplicationContext());
+        }
+        return instance;
+    }
+
+    private Database(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
     }
 

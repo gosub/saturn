@@ -9,11 +9,6 @@ public class BootReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         if (!Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) return;
-        Database db = new Database(context);
-        try {
-            NudgeScheduler.scheduleNext(context, db);
-        } finally {
-            db.close();
-        }
+        NudgeScheduler.scheduleNext(context, Database.get(context));
     }
 }

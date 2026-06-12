@@ -81,7 +81,7 @@ public class SettingsActivity extends Activity {
                 .setNegativeButton("Cancel", null)
                 .show());
 
-        settingsDb = new Database(this);
+        settingsDb = Database.get(this);
         Button clearTasksBtn = findViewById(R.id.clear_tasks_btn);
         clearTasksBtn.setOnClickListener(v ->
             new AlertDialog.Builder(this)
@@ -94,12 +94,6 @@ public class SettingsActivity extends Activity {
                 })
                 .setNegativeButton("Cancel", null)
                 .show());
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        settingsDb.close();
     }
 
     private void save() {
