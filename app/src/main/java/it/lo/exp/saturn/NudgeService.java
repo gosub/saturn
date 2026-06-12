@@ -88,7 +88,7 @@ public class NudgeService extends Service {
                 StringBuilder warn = new StringBuilder("⚠ No reminder set for:");
                 for (Task t : stillDue) warn.append("\n  \u2022 ").append(t.description);
                 warn.append("\nTell me when to remind you again.");
-                appendPendingNudge(prefs, warn.toString());
+                db.saveMessage(ChatMessage.ROLE_BOT, warn.toString(), System.currentTimeMillis());
             }
         }
         NudgeScheduler.scheduleNext(this, db);
@@ -108,26 +108,17 @@ public class NudgeService extends Service {
 
             if (resp.reply != null && !resp.reply.isEmpty()) {
                 postNudgeNotification(resp.reply);
-                appendPendingNudge(prefs, resp.reply);
-                appendNudgeToHistory(prefs, resp.reply);
+                saveNudgeMessage(db, resp.reply);
             }
         } catch (Exception e) {
             Log.e(TAG, "nudge phase error", e);
         }
     }
 
-    private static void appendNudgeToHistory(SharedPreferences prefs, String reply) {
-        String histJson = prefs.getString("conversation_history", "");
-        java.util.List<AgentClient.Message> history = AgentClient.loadHistory(histJson);
-        String updated = AgentClient.saveHistory(history, null, "[nudge] " + reply);
-        prefs.edit().putString("conversation_history", updated).apply();
-    }
-
-    private static void appendPendingNudge(SharedPreferences prefs, String message) {
-        String existing = prefs.getString("pending_nudges", "[]");
-        com.google.gson.JsonArray arr = com.google.gson.JsonParser.parseString(existing).getAsJsonArray();
-        arr.add(message);
-        prefs.edit().putString("pending_nudges", arr.toString()).apply();
+    /** Nudges land in the shared messages table; the chat shows them on resume
+     *  and the model sees them as assistant turns. */
+    private static void saveNudgeMessage(Database db, String text) {
+        db.saveMessage(ChatMessage.ROLE_BOT, "⏰ " + text, System.currentTimeMillis());
     }
 
     private Notification buildCheckingNotification() {

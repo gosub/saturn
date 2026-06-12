@@ -22,7 +22,7 @@ public class AgentClient {
 
     private static final String TAG = "Saturn";
     private static final String API_URL = "https://openrouter.ai/api/v1/chat/completions";
-    private static final int MAX_HISTORY = 20;
+    public static final int MAX_HISTORY = 20;
     private static final Gson GSON = new Gson();
 
     // ---- JSON models ----
@@ -90,7 +90,7 @@ public class AgentClient {
         List<Message> messages = new ArrayList<>();
         messages.add(new Message("system", systemPrompt));
         if (history != null) messages.addAll(history);
-        messages.add(new Message("user", userMessage));
+        if (userMessage != null) messages.add(new Message("user", userMessage));
 
         String requestBody = GSON.toJson(new ChatRequest(model, messages));
         Log.d(TAG, "openrouter request: model=" + model + " body_bytes=" + requestBody.length());
@@ -241,33 +241,6 @@ public class AgentClient {
         sb.append("Respond: {\"reply\": \"...\", \"actions\": [...]}\n");
         sb.append("Actions: update_task (id, description optional, next_nudge_at optional), complete_task (id), delete_task (id), snooze_task (id, minutes).\n");
         return sb.toString();
-    }
-
-    // ---- History helpers ----
-
-    public static List<Message> loadHistory(String json) {
-        if (json == null || json.isEmpty()) return new ArrayList<>();
-        try {
-            Message[] arr = GSON.fromJson(json, Message[].class);
-            List<Message> list = new ArrayList<>();
-            for (Message m : arr) list.add(m);
-            return list;
-        } catch (Exception e) {
-            return new ArrayList<>();
-        }
-    }
-
-    public static String saveHistory(List<Message> history, String userMsg, String reply) {
-        if (userMsg != null && !userMsg.isEmpty()) {
-            history.add(new Message("user", userMsg));
-        }
-        if (reply != null && !reply.isEmpty()) {
-            history.add(new Message("assistant", reply));
-        }
-        while (history.size() > MAX_HISTORY) {
-            history.remove(0);
-        }
-        return GSON.toJson(history);
     }
 
     // ---- Helpers ----

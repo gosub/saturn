@@ -188,15 +188,33 @@ public class Database extends SQLiteOpenHelper {
         SQLiteDatabase db = getReadableDatabase();
         Cursor c = db.query("messages", null, null, null, null, null, "id ASC");
         while (c.moveToNext()) {
-            int role    = c.getInt(c.getColumnIndexOrThrow("role"));
-            String text = c.getString(c.getColumnIndexOrThrow("content"));
-            long ts     = c.getLong(c.getColumnIndexOrThrow("ts"));
-            ChatMessage m = new ChatMessage(role, text);
-            m.ts = ts;
-            list.add(m);
+            list.add(rowToMessage(c));
         }
         c.close();
         return list;
+    }
+
+    /** The most recent user/bot messages, oldest first. Source of the model's context. */
+    public List<ChatMessage> loadRecentChat(int limit) {
+        List<ChatMessage> list = new ArrayList<>();
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor c = db.query("messages", null,
+            "role IN (" + ChatMessage.ROLE_USER + "," + ChatMessage.ROLE_BOT + ")",
+            null, null, null, "id DESC", String.valueOf(limit));
+        while (c.moveToNext()) {
+            list.add(0, rowToMessage(c));
+        }
+        c.close();
+        return list;
+    }
+
+    private ChatMessage rowToMessage(Cursor c) {
+        int role    = c.getInt(c.getColumnIndexOrThrow("role"));
+        String text = c.getString(c.getColumnIndexOrThrow("content"));
+        long ts     = c.getLong(c.getColumnIndexOrThrow("ts"));
+        ChatMessage m = new ChatMessage(role, text);
+        m.ts = ts;
+        return m;
     }
 
     public void clearMessages() {

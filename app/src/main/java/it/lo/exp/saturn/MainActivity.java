@@ -71,6 +71,8 @@ public class MainActivity extends Activity {
 
         db = Database.get(this);
         prefs = getSharedPreferences("saturn", MODE_PRIVATE);
+        // Obsolete keys from when history/nudges lived in SharedPreferences.
+        prefs.edit().remove("conversation_history").remove("pending_nudges").apply();
 
         chatList   = findViewById(R.id.chat_list);
         emptyHint  = findViewById(R.id.empty_hint);
@@ -80,10 +82,6 @@ public class MainActivity extends Activity {
         adapter = new ChatAdapter(this, messages);
         chatList.setAdapter(adapter);
         chatList.setStackFromBottom(true);
-
-        messages.addAll(db.loadMessages());
-        adapter.notifyDataSetChanged();
-        updateEmptyHint();
 
         sendBtn.setOnClickListener(v -> onSend());
 
@@ -131,14 +129,14 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        String pending = prefs.getString("pending_nudges", "[]");
-        prefs.edit().remove("pending_nudges").apply();
-        try {
-            com.google.gson.JsonArray arr = com.google.gson.JsonParser.parseString(pending).getAsJsonArray();
-            for (com.google.gson.JsonElement el : arr) {
-                addBotMessage(el.getAsString());
-            }
-        } catch (Exception ignored) {}
+        // The messages table is the single source of truth; NudgeService may
+        // have appended nudges while we were backgrounded.
+        messages.clear();
+        synchronized (db) { messages.addAll(db.loadMessages()); }
+        if (typingMessage != null) messages.add(typingMessage);
+        adapter.notifyDataSetChanged();
+        updateEmptyHint();
+        chatList.setSelection(messages.size() - 1);
     }
 
     @Override
@@ -168,22 +166,26 @@ public class MainActivity extends Activity {
             String model    = prefs.getString("model", "openai/gpt-oss-120b:free");
             String language = prefs.getString("language", "en");
             String schedule = prefs.getString("schedule", "");
-            String histJson = prefs.getString("conversation_history", "");
 
-            List<AgentClient.Message> history = AgentClient.loadHistory(histJson);
-            String systemPrompt;
+            // History comes from the messages table and already ends with the
+            // user message saved by addUserMessage above.
+            List<AgentClient.Message> history = new ArrayList<>();
             List<Task> tasks;
             synchronized (db) {
+                for (ChatMessage m : db.loadRecentChat(AgentClient.MAX_HISTORY)) {
+                    history.add(new AgentClient.Message(
+                        m.role == ChatMessage.ROLE_USER ? "user" : "assistant", m.content));
+                }
                 tasks = db.getTasks();
             }
-            systemPrompt = AgentClient.buildChatPrompt(
+            String systemPrompt = AgentClient.buildChatPrompt(
                 language, schedule, tasks, System.currentTimeMillis());
 
             boolean done = false;
             while (!done) {
                 try {
                     AgentClient.AgentResponse resp = new AgentClient()
-                        .chat(apiKey, model, systemPrompt, history, text);
+                        .chat(apiKey, model, systemPrompt, history, null);
 
                     synchronized (db) {
                         ActionExecutor.execute(resp.actions, db, prefs);
@@ -193,8 +195,6 @@ public class MainActivity extends Activity {
                     String reply = (resp.reply != null && !resp.reply.isEmpty())
                         ? resp.reply : "(no reply)";
                     Log.d(TAG, "chat: reply=\"" + reply + "\" actions=" + resp.actions.size());
-                    String updatedHistory = AgentClient.saveHistory(history, text, resp.reply);
-                    prefs.edit().putString("conversation_history", updatedHistory).apply();
 
                     runOnUiThread(() -> {
                         hideTypingIndicator();
@@ -349,15 +349,15 @@ public class MainActivity extends Activity {
         sb.append("timezone: ").append(TimeZone.getDefault().getID()).append(" (device)\n");
         sb.append("language: ").append(prefs.getString("language", "\u2014")).append("\n");
         sb.append("schedule: ").append(prefs.getString("schedule", "not set")).append("\n");
-        List<AgentClient.Message> hist = AgentClient.loadHistory(
-            prefs.getString("conversation_history", ""));
-        sb.append("history:  ").append(hist.size() / 2).append(" turns\n");
         String next;
         List<Task> tasks;
+        int histSize;
         synchronized (db) {
+            histSize = db.loadRecentChat(AgentClient.MAX_HISTORY).size();
             next = db.getNextScheduledTime();
             tasks = db.getTasks();
         }
+        sb.append("history:  ").append(histSize).append(" messages\n");
         sb.append("next alarm: ").append(next != null ? next : "none").append("\n");
         sb.append("\ntasks (").append(tasks.size()).append("):\n");
         for (Task t : tasks) {
