@@ -22,6 +22,8 @@ public class NudgeService extends Service {
     private static final int NUDGE_NOTIF_ID = 2;
 
     private static final long CYCLE_TIMEOUT_MS = 90_000L;
+    private static final int RETRY_MINUTES = 30;
+    private static final int MAX_FAILURES = 5;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -75,29 +77,79 @@ public class NudgeService extends Service {
         List<Task> due = db.getDueTasks(nowISO);
         if (!due.isEmpty()) {
             Log.d(TAG, "nudge phase: " + due.size() + " due tasks");
-            runNudgePhase(db, prefs, apiKey, model, language, schedule,
-                          due, nowMillis, nowISO);
-            // Always clear still-due tasks after the phase, even if it failed,
-            // so a past next_nudge_at never causes an immediate-refire loop.
-            List<Task> stillDue = db.getDueTasks(nowISO);
-            for (Task t : stillDue) {
-                Log.d(TAG, "clearing unresolved due task " + t.id);
-                db.setNextNudgeAt(t.id, null);
-            }
-            if (!stillDue.isEmpty()) {
-                StringBuilder warn = new StringBuilder("⚠ No reminder set for:");
-                for (Task t : stillDue) warn.append("\n  \u2022 ").append(t.description);
-                warn.append("\nTell me when to remind you again.");
-                db.saveMessage(ChatMessage.ROLE_BOT, warn.toString(), System.currentTimeMillis());
+            boolean ok = runNudgePhase(db, prefs, apiKey, model, language, schedule,
+                                       due, nowMillis, nowISO);
+            if (ok) {
+                prefs.edit().putInt("nudge_fail_count", 0).apply();
+                rescheduleLeftDue(db, nowISO, nowMillis);
+            } else {
+                handleNudgeFailure(db, prefs, due, nowMillis);
             }
         }
         NudgeScheduler.scheduleNext(this, db);
     }
 
-    private void runNudgePhase(Database db, SharedPreferences prefs,
-                                String apiKey, String model,
-                                String language, String schedule,
-                                List<Task> due, long nowMillis, String nowISO) {
+    /** Deterministic fallback for tasks the model nudged but left due: a past
+     *  next_nudge_at must never survive the cycle or the alarm refires at once. */
+    private void rescheduleLeftDue(Database db, String nowISO, long nowMillis) {
+        for (Task t : db.getDueTasks(nowISO)) {
+            int minutes = t.recurring ? 24 * 60 : 60;
+            String next = isoPlusMinutes(nowMillis, minutes);
+            Log.d(TAG, "task " + t.id + " left due by model, rescheduling to " + next);
+            db.setNextNudgeAt(t.id, next);
+        }
+    }
+
+    /** The reminder itself must not depend on the API being reachable: deliver
+     *  the raw task text on the first failure, then retry the cycle with backoff.
+     *  After MAX_FAILURES consecutive failures give up loudly. */
+    private void handleNudgeFailure(Database db, SharedPreferences prefs,
+                                     List<Task> due, long nowMillis) {
+        int fails = prefs.getInt("nudge_fail_count", 0) + 1;
+        prefs.edit().putInt("nudge_fail_count", fails).apply();
+        Log.w(TAG, "nudge phase failed (attempt " + fails + ")");
+
+        if (fails == 1) {
+            String raw = rawReminderText(due);
+            postNudgeNotification(raw);
+            saveNudgeMessage(db, raw + "\n(I couldn\u2019t reach the model, this is a raw reminder.)");
+        }
+
+        if (fails >= MAX_FAILURES) {
+            prefs.edit().putInt("nudge_fail_count", 0).apply();
+            StringBuilder warn = new StringBuilder("⚠ Gave up retrying. No reminder set for:");
+            for (Task t : due) {
+                db.setNextNudgeAt(t.id, null);
+                warn.append("\n  \u2022 ").append(t.description);
+            }
+            warn.append("\nTell me when to remind you again.");
+            postNudgeNotification(warn.toString());
+            db.saveMessage(ChatMessage.ROLE_BOT, warn.toString(), System.currentTimeMillis());
+        } else {
+            String retryAt = isoPlusMinutes(nowMillis, RETRY_MINUTES);
+            for (Task t : due) {
+                db.setNextNudgeAt(t.id, retryAt);
+            }
+            Log.d(TAG, "retrying nudge cycle at " + retryAt);
+        }
+    }
+
+    private static String rawReminderText(List<Task> due) {
+        if (due.size() == 1) return due.get(0).description;
+        StringBuilder sb = new StringBuilder(due.size() + " tasks due:");
+        for (Task t : due) sb.append("\n  \u2022 ").append(t.description);
+        return sb.toString();
+    }
+
+    private static String isoPlusMinutes(long baseMillis, int minutes) {
+        return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
+            .format(new Date(baseMillis + minutes * 60_000L));
+    }
+
+    private boolean runNudgePhase(Database db, SharedPreferences prefs,
+                                   String apiKey, String model,
+                                   String language, String schedule,
+                                   List<Task> due, long nowMillis, String nowISO) {
         try {
             String prompt = AgentClient.buildNudgePrompt(language, schedule, due, nowMillis);
             String trigger = "Nudge check at " + nowISO + ". " + due.size() + " task(s) due.";
@@ -110,8 +162,10 @@ public class NudgeService extends Service {
                 postNudgeNotification(resp.reply);
                 saveNudgeMessage(db, resp.reply);
             }
+            return true;
         } catch (Exception e) {
             Log.e(TAG, "nudge phase error", e);
+            return false;
         }
     }
 
