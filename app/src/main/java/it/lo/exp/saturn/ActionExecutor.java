@@ -19,7 +19,7 @@ public class ActionExecutor {
             Log.d(TAG, "action: type=" + a.type + " id=" + a.id + " desc=" + a.description);
             switch (a.type != null ? a.type : "") {
                 case "add_task": {
-                    Task t = db.addTask(a.description, a.recurring);
+                    Task t = db.addTask(a.description, Boolean.TRUE.equals(a.recurring));
                     String addTime = validatedFutureTime(a.nextNudgeAt);
                     if (addTime != null) {
                         db.setNextNudgeAt(t.id, addTime);
@@ -42,8 +42,8 @@ public class ActionExecutor {
                     } else if (a.nextNudgeAt != null && !a.nextNudgeAt.isEmpty()) {
                         Log.w(TAG, "update_task " + a.id + ": rejected invalid/past next_nudge_at: " + a.nextNudgeAt);
                     }
-                    if (a.recurring) {
-                        db.setRecurring(a.id, true);
+                    if (a.recurring != null) {
+                        db.setRecurring(a.id, a.recurring);
                     }
                     break;
                 }

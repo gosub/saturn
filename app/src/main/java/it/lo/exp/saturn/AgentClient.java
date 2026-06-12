@@ -43,7 +43,7 @@ public class AgentClient {
         public long id;
         @SerializedName("next_nudge_at") public String nextNudgeAt;
         public String schedule;
-        public boolean recurring;
+        public Boolean recurring; // null = not specified
         public int minutes; // for snooze_task
     }
 
@@ -201,7 +201,7 @@ public class AgentClient {
         sb.append("  {\"type\": \"snooze_task\",      \"id\": N, \"minutes\": 30}\n");
         sb.append("Always use numeric id from the task list. next_nudge_at is required for add_task.\n");
         sb.append("next_nudge_at must be ISO 8601 (e.g. 2026-03-21T09:00:00). Respect the user's schedule.\n");
-        sb.append("Set recurring: true for habitual/repeating tasks.\n");
+        sb.append("Set recurring: true for habitual/repeating tasks; recurring: false in update_task stops the repetition.\n");
         sb.append("Recurring tasks (\u21bb) must never be completed \u2014 use update_task with the next next_nudge_at.\n");
         return sb.toString();
     }
