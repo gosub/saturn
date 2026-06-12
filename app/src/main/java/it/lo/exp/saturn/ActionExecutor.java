@@ -125,7 +125,7 @@ public class ActionExecutor {
     }
 
     /** Returns the time string if it parses as ISO 8601 and is in the future, else null. */
-    private static String validatedFutureTime(String s) {
+    static String validatedFutureTime(String s) {
         if (s == null || s.isEmpty()) return null;
         try {
             Date d = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).parse(s);

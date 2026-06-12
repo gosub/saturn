@@ -245,7 +245,7 @@ public class AgentClient {
 
     // ---- Helpers ----
 
-    private static String stripCodeFences(String s) {
+    static String stripCodeFences(String s) {
         if (s == null) return s;
         s = s.trim();
         if (s.startsWith("```")) {

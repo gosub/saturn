@@ -1,0 +1,90 @@
+package it.lo.exp.saturn;
+
+import org.junit.Test;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+public class AgentClientTest {
+
+    // ---- stripCodeFences ----
+
+    @Test
+    public void stripCodeFencesPassesPlainJsonThrough() {
+        assertEquals("{\"reply\": \"hi\"}",
+            AgentClient.stripCodeFences("{\"reply\": \"hi\"}"));
+    }
+
+    @Test
+    public void stripCodeFencesRemovesJsonFence() {
+        assertEquals("{\"reply\": \"hi\"}",
+            AgentClient.stripCodeFences("```json\n{\"reply\": \"hi\"}\n```"));
+    }
+
+    @Test
+    public void stripCodeFencesRemovesBareFence() {
+        assertEquals("{}", AgentClient.stripCodeFences("```\n{}\n```"));
+    }
+
+    @Test
+    public void stripCodeFencesTrimsWhitespace() {
+        assertEquals("{}", AgentClient.stripCodeFences("  {}  \n"));
+    }
+
+    @Test
+    public void stripCodeFencesHandlesNull() {
+        assertEquals(null, AgentClient.stripCodeFences(null));
+    }
+
+    // ---- buildChatPrompt ----
+
+    @Test
+    public void chatPromptListsTasksWithIdsAndRecurrenceMarker() {
+        List<Task> tasks = Arrays.asList(
+            new Task(1, "buy milk", "2026-06-13T09:00:00", false),
+            new Task(2, "morning run", "2026-06-13T07:00:00", true));
+        String p = AgentClient.buildChatPrompt("en", "weekdays 9-18", tasks,
+            System.currentTimeMillis());
+        assertTrue(p.contains("Active tasks (2):"));
+        assertTrue(p.contains("1. buy milk"));
+        assertTrue(p.contains("2. ↻ morning run"));
+        assertTrue(p.contains("weekdays 9-18"));
+        assertTrue(p.contains("Respond ONLY with a JSON object"));
+    }
+
+    @Test
+    public void chatPromptUsesItalianWhenConfigured() {
+        String p = AgentClient.buildChatPrompt("it", "", Collections.emptyList(),
+            System.currentTimeMillis());
+        assertTrue(p.contains("Italian"));
+        assertTrue(p.contains("Active tasks: none"));
+    }
+
+    // ---- buildNudgePrompt ----
+
+    @Test
+    public void nudgePromptMarksLateTasks() {
+        long now = System.currentTimeMillis();
+        String scheduled = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss",
+            java.util.Locale.US).format(new java.util.Date(now - 60 * 60_000L));
+        List<Task> due = Collections.singletonList(new Task(7, "call mom", scheduled, false));
+        String p = AgentClient.buildNudgePrompt("en", "", due, now);
+        assertTrue(p.contains("7. call mom"));
+        assertTrue(p.contains("[LATE by"));
+    }
+
+    @Test
+    public void nudgePromptDoesNotOfferCompleteOrDelete() {
+        List<Task> due = Collections.singletonList(
+            new Task(1, "buy milk", "2026-06-13T09:00:00", false));
+        String p = AgentClient.buildNudgePrompt("en", "", due, System.currentTimeMillis());
+        assertFalse(p.contains("complete_task ("));
+        assertFalse(p.contains("delete_task ("));
+        assertTrue(p.contains("snooze_task"));
+    }
+}

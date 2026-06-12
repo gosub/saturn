@@ -2,10 +2,13 @@ PACKAGE  := it.lo.exp.saturn
 ACTIVITY := .MainActivity
 APK      := app/build/outputs/apk/debug/app-debug.apk
 
-.PHONY: build install run release clean distclean logcat
+.PHONY: build install run release test clean distclean logcat
 
 build:
 	gradle --no-daemon assembleDebug
+
+test:
+	gradle --no-daemon testDebugUnitTest
 
 install:
 	gradle --no-daemon installDebug
