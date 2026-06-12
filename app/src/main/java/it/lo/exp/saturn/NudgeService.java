@@ -14,6 +14,11 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class NudgeService extends Service {
 
@@ -25,29 +30,33 @@ public class NudgeService extends Service {
     private static final int RETRY_MINUTES = 30;
     private static final int MAX_FAILURES = 5;
 
+    // Serializes nudge cycles: concurrent starts (e.g. two scheduleNext calls
+    // both hitting the past-trigger path) queue up instead of running in
+    // parallel, and the second cycle finds no due tasks left.
+    private static final ExecutorService CYCLES = Executors.newSingleThreadExecutor();
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         startForeground(FOREGROUND_NOTIF_ID, buildCheckingNotification());
         int capturedStartId = startId;
-        Thread worker = new Thread(() -> {
+        Future<?> cycle = CYCLES.submit(() -> {
             try {
                 runNudgeCycle();
             } catch (Exception e) {
                 Log.e(TAG, "nudge cycle error", e);
             } finally {
                 stopForeground(true);
+                // Only stops the service when this is the most recent start.
                 stopSelf(capturedStartId);
             }
         });
-        worker.start();
         new Thread(() -> {
             try {
-                worker.join(CYCLE_TIMEOUT_MS);
-                if (worker.isAlive()) {
-                    Log.e(TAG, "nudge cycle timed out after " + CYCLE_TIMEOUT_MS + "ms, interrupting");
-                    worker.interrupt();
-                }
-            } catch (InterruptedException ignored) {}
+                cycle.get(CYCLE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+            } catch (TimeoutException te) {
+                Log.e(TAG, "nudge cycle timed out after " + CYCLE_TIMEOUT_MS + "ms, interrupting");
+                cycle.cancel(true);
+            } catch (Exception ignored) {}
         }).start();
         return START_NOT_STICKY;
     }
