@@ -124,15 +124,24 @@ public class ActionExecutor {
         return receipts;
     }
 
-    /** Returns the time string if it parses as ISO 8601 and is in the future, else null. */
+    /** Returns the time normalized to plain device-local yyyy-MM-dd'T'HH:mm:ss if it
+     *  parses as ISO 8601 and is in the future, else null. Models sometimes append
+     *  an offset (+02:00, Z) despite the prompt; a suffixed string stored verbatim
+     *  breaks the lexicographic due-task comparison and misparses in the scheduler,
+     *  so the offset is honored here and then dropped. */
     static String validatedFutureTime(String s) {
         if (s == null || s.isEmpty()) return null;
+        s = s.trim();
+        Date d;
         try {
-            Date d = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).parse(s);
-            if (d != null && d.getTime() > System.currentTimeMillis()) return s;
-            return null;
+            String pattern = s.matches(".*([+-]\\d{2}:?\\d{2}|Z)$")
+                ? "yyyy-MM-dd'T'HH:mm:ssXXX"
+                : "yyyy-MM-dd'T'HH:mm:ss";
+            d = new SimpleDateFormat(pattern, Locale.US).parse(s);
         } catch (Exception e) {
             return null;
         }
+        if (d == null || d.getTime() <= System.currentTimeMillis()) return null;
+        return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).format(d);
     }
 }

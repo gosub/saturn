@@ -38,6 +38,8 @@ public class AgentClient {
     }
 
     public static class Action {
+        // Models occasionally emit "action" instead of "type"
+        @SerializedName(value = "type", alternate = {"action"})
         public String type;
         public String description;
         public long id;
