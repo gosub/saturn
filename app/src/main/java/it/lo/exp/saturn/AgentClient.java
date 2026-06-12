@@ -60,9 +60,14 @@ public class AgentClient {
         }
     }
 
+    private static class ResponseFormat {
+        String type = "json_object";
+    }
+
     private static class ChatRequest {
         String model;
         List<Message> messages;
+        @SerializedName("response_format") ResponseFormat responseFormat = new ResponseFormat();
 
         ChatRequest(String model, List<Message> messages) {
             this.model = model;
