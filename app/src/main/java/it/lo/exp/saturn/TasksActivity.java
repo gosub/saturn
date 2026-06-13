@@ -5,7 +5,9 @@ import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -19,6 +21,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /** Direct, mostly LLM-free task management: the active tasks grouped by when
  *  they next fire. */
@@ -27,10 +31,12 @@ public class TasksActivity extends Activity {
     private static final int SNOOZE_MINUTES = 30;
 
     private Database db;
+    private SharedPreferences prefs;
     private ListView list;
     private TextView empty;
     private TaskListAdapter adapter;
     private final List<TaskListAdapter.Row> rows = new ArrayList<>();
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     @Override
     protected void attachBaseContext(Context base) {
@@ -42,6 +48,7 @@ public class TasksActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_tasks);
         db = Database.get(this);
+        prefs = getSharedPreferences("saturn", MODE_PRIVATE);
         list = findViewById(R.id.tasks_list);
         empty = findViewById(R.id.tasks_empty);
         adapter = new TaskListAdapter(this, rows);
@@ -57,6 +64,12 @@ public class TasksActivity extends Activity {
     protected void onResume() {
         super.onResume();
         refresh();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        executor.shutdown();
     }
 
     private void refresh() {
@@ -87,6 +100,8 @@ public class TasksActivity extends Activity {
         handlers.add(() -> editTime(t));
         labels.add(getString(R.string.action_edit_desc));
         handlers.add(() -> editDescription(t));
+        labels.add(getString(R.string.action_ask));
+        handlers.add(() -> askSaturn(t));
         labels.add(getString(R.string.action_delete));
         handlers.add(() -> apply(() -> db.deleteTask(t.id), R.string.toast_deleted));
 
@@ -129,6 +144,63 @@ public class TasksActivity extends Activity {
             }, seed.get(Calendar.HOUR_OF_DAY), seed.get(Calendar.MINUTE), true).show(),
             seed.get(Calendar.YEAR), seed.get(Calendar.MONTH), seed.get(Calendar.DAY_OF_MONTH)
         ).show();
+    }
+
+    /** Freeform edit routed through the model, scoped to this one task. The only
+     *  action on the task screen that needs network; the list refresh shows the
+     *  result and a toast carries the receipt. */
+    private void askSaturn(Task t) {
+        String apiKey = KeystoreHelper.readApiKey(prefs);
+        if (apiKey.isEmpty()) {
+            Toast.makeText(this, R.string.need_api_key_chat, Toast.LENGTH_LONG).show();
+            return;
+        }
+        EditText input = new EditText(this);
+        input.setHint(R.string.ask_hint);
+        new AlertDialog.Builder(this)
+            .setTitle((t.recurring ? "↻ " : "") + t.description)
+            .setView(input)
+            .setPositiveButton(R.string.send, (d, w) -> {
+                String instruction = input.getText().toString().trim();
+                if (!instruction.isEmpty()) runEdit(t, instruction, apiKey);
+            })
+            .setNegativeButton(R.string.cancel, null)
+            .show();
+    }
+
+    private void runEdit(Task t, String instruction, String apiKey) {
+        Toast.makeText(this, R.string.asking, Toast.LENGTH_SHORT).show();
+        String model    = prefs.getString("model", "openai/gpt-oss-120b:free");
+        String language = prefs.getString("language", "en");
+        String schedule = prefs.getString("schedule", "");
+        executor.execute(() -> {
+            try {
+                String prompt = AgentClient.buildEditTaskPrompt(
+                    language, schedule, t, System.currentTimeMillis());
+                AgentClient.AgentResponse resp = new AgentClient()
+                    .chat(apiKey, model, prompt, null, instruction);
+
+                List<Receipt> receipts;
+                synchronized (db) {
+                    receipts = ActionExecutor.execute(resp.actions, db,
+                        s -> prefs.edit().putString("schedule", s).apply());
+                    NudgeScheduler.scheduleNext(TasksActivity.this, db);
+                }
+                final String summary = !receipts.isEmpty()
+                    ? ReceiptFormatter.join(this, receipts)
+                    : (resp.reply != null ? resp.reply : "");
+                runOnUiThread(() -> {
+                    refresh();
+                    if (!summary.isEmpty()) {
+                        Toast.makeText(this, summary, Toast.LENGTH_LONG).show();
+                    }
+                });
+            } catch (Exception e) {
+                Log.e("Saturn", "task edit error", e);
+                runOnUiThread(() ->
+                    Toast.makeText(this, R.string.edit_failed, Toast.LENGTH_LONG).show());
+            }
+        });
     }
 
     private void editDescription(Task t) {

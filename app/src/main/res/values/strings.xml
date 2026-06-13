@@ -37,6 +37,10 @@
     <string name="toast_time_past">That time is in the past.</string>
     <string name="toast_time_set">Reminder updated</string>
     <string name="toast_saved">Saved</string>
+    <string name="action_ask">Ask Saturn to change this</string>
+    <string name="ask_hint">e.g. move to tomorrow 9am, make it weekly…</string>
+    <string name="asking">Asking Saturn…</string>
+    <string name="edit_failed">Couldn\'t reach Saturn. Try again.</string>
     <string name="toast_completed">Completed</string>
     <string name="toast_snoozed">Snoozed 30 min</string>
     <string name="toast_deleted">Deleted</string>

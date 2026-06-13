@@ -36,6 +36,10 @@
     <string name="toast_time_past">Quell\'orario è nel passato.</string>
     <string name="toast_time_set">Promemoria aggiornato</string>
     <string name="toast_saved">Salvato</string>
+    <string name="action_ask">Chiedi a Saturn di modificarla</string>
+    <string name="ask_hint">es. sposta a domani alle 9, rendila settimanale…</string>
+    <string name="asking">Sto chiedendo a Saturn…</string>
+    <string name="edit_failed">Impossibile contattare Saturn. Riprova.</string>
     <string name="toast_completed">Completato</string>
     <string name="toast_snoozed">Posticipato di 30 min</string>
     <string name="toast_deleted">Eliminato</string>
