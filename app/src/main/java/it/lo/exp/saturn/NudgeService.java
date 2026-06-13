@@ -11,6 +11,7 @@ import android.os.IBinder;
 import android.util.Log;
 
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -125,22 +126,37 @@ public class NudgeService extends Service {
 
     /** First anchor + k*interval strictly after now. Anchoring on the scheduled
      *  time instead of now keeps fixed-interval tasks from drifting when a cycle
-     *  runs late or fails. Pure epoch arithmetic: a daily task shifts wall-clock
-     *  time across DST changes. */
+     *  runs late or fails.
+     *
+     *  Day-multiple intervals advance on a wall-clock calendar grid, so a daily
+     *  09:00 task stays at 09:00 across DST transitions instead of drifting an
+     *  hour. Sub-day intervals use pure epoch arithmetic — an hourly task is an
+     *  hour of real time, DST notwithstanding. */
     static String nextOccurrence(String anchorISO, int intervalMinutes, long nowMillis) {
-        long step = intervalMinutes * 60_000L;
+        SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
         long base;
         try {
-            base = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
-                .parse(anchorISO).getTime();
+            base = fmt.parse(anchorISO).getTime();
         } catch (Exception e) {
             base = nowMillis;
         }
+
+        if (intervalMinutes % 1440 == 0) {
+            int days = intervalMinutes / 1440;
+            Calendar cal = Calendar.getInstance();
+            cal.setTimeInMillis(base);
+            do {
+                cal.add(Calendar.DAY_OF_MONTH, days);
+            } while (cal.getTimeInMillis() <= nowMillis);
+            return fmt.format(cal.getTime());
+        }
+
+        long step = intervalMinutes * 60_000L;
         long next = base + step;
         if (next <= nowMillis) {
             next = base + ((nowMillis - base) / step + 1) * step;
         }
-        return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).format(new Date(next));
+        return fmt.format(new Date(next));
     }
 
     /** The reminder itself must not depend on the API being reachable: deliver

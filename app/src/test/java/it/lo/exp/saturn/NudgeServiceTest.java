@@ -46,6 +46,25 @@ public class NudgeServiceTest {
     }
 
     @Test
+    public void nextOccurrenceKeepsWallClockAcrossSpringForward() throws Exception {
+        // Europe/Rome springs forward on 2030-03-31 (02:00 -> 03:00). A daily
+        // 09:00 task fired on the 30th must next fire at 09:00 on the 31st, not
+        // 10:00 as pure epoch arithmetic would produce.
+        String next = NudgeService.nextOccurrence(
+            "2030-03-30T09:00:00", 1440, epoch("2030-03-30T09:37:00"));
+        assertEquals("2030-03-31T09:00:00", next);
+    }
+
+    @Test
+    public void nextOccurrenceKeepsWallClockAcrossFallBack() throws Exception {
+        // Rome falls back on 2030-10-27 (03:00 -> 02:00). A daily 09:00 task
+        // fired on the 26th must next fire at 09:00 on the 27th.
+        String next = NudgeService.nextOccurrence(
+            "2030-10-26T09:00:00", 1440, epoch("2030-10-26T09:37:00"));
+        assertEquals("2030-10-27T09:00:00", next);
+    }
+
+    @Test
     public void nextOccurrenceHourlyGrid() throws Exception {
         String next = NudgeService.nextOccurrence(
             "2030-01-01T09:00:00", 60, epoch("2030-01-01T09:10:00"));
