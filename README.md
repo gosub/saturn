@@ -10,10 +10,11 @@ An agentic alarm clock for Android — you say what, it handles when.
 
 - Chat with an AI agent to add, update, and complete tasks
 - Agent schedules reminders based on task descriptions and your availability
-- Notifications fire at the scheduled time, with Done / Snooze buttons; replies appear in chat when you open the app
+- A Tasks screen lists everything grouped by when it next fires (Today / This week / Later / No reminder); complete, snooze, reschedule, edit, or delete a task directly — no model call — or ask the agent to change one in plain language
+- Notifications fire at the scheduled time, one per due task, each with Done / Snooze buttons; replies appear in chat when you open the app
 - Reminders fire even when the model is unreachable (raw task text, retried with backoff)
-- Recurring tasks (↻) are rescheduled after each nudge, with a deterministic fallback if the model forgets
-- All times use the device timezone
+- Recurring tasks (↻) are rescheduled after each nudge, with a deterministic fallback if the model forgets; daily/weekly tasks keep their wall-clock time across DST
+- English and Italian UI; all times use the device timezone
 
 ## Setup
 
@@ -48,10 +49,14 @@ make logcat   # stream filtered logs
 | Component | Role |
 |-----------|------|
 | `MainActivity` | Chat UI |
+| `TasksActivity` | Task screen: time-bucketed list with direct (mostly LLM-free) actions |
 | `SettingsActivity` | API key, model, language, schedule |
-| `Database` | SQLite store for tasks and chat messages (single source of model context) |
-| `AgentClient` | HTTP to OpenRouter, prompt builders, JSON parsing |
-| `ActionExecutor` | Applies agent actions to the DB, returns receipts shown in chat |
+| `Database` | SQLite store for tasks and chat messages (single source of model context); implements `TaskStore` |
+| `TaskStore` | Persistence interface `ActionExecutor` depends on (in-memory fake in tests) |
+| `AgentClient` | HTTP to OpenRouter, prompt builders (chat / nudge / single-task edit), JSON parsing |
+| `ActionExecutor` | Applies agent actions to the DB (each in a transaction), returns structured `Receipt`s |
+| `ReceiptFormatter` | Renders `Receipt`s as localized lines, shared by both screens |
+| `LocaleHelper` | Applies the in-app language as the context locale (no AndroidX) |
 | `NudgeService` | Foreground service: runs nudge cycle when alarm fires |
 | `NudgeReceiver` | BroadcastReceiver — wakes `NudgeService` on alarm |
 | `NudgeActionReceiver` | Handles Done / Snooze notification buttons locally (no LLM) |
