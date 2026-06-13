@@ -47,6 +47,7 @@
     <string name="settings_title">Impostazioni</string>
     <string name="label_api_key">Chiave API OpenRouter</string>
     <string name="label_model">Modello</string>
+    <string name="model_hint">I modelli gratuiti (es. :free) hanno forti limiti di frequenza; un modello a pagamento è più stabile.</string>
     <string name="label_language">Lingua</string>
     <string name="label_schedule">Disponibilità (testo libero)</string>
     <string name="hint_schedule">es. feriali 9-13 e 15-19</string>

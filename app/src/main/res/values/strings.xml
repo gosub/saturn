@@ -48,6 +48,7 @@
     <string name="settings_title">Settings</string>
     <string name="label_api_key">OpenRouter API key</string>
     <string name="label_model">Model</string>
+    <string name="model_hint">Free models (e.g. :free) are heavily rate-limited; a paid model is steadier.</string>
     <string name="label_language">Language</string>
     <string name="label_schedule">Schedule (freeform)</string>
     <string name="hint_schedule">e.g. weekdays 9-13 and 15-19</string>
