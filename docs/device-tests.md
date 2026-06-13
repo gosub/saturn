@@ -69,3 +69,18 @@ Conventions:
    model decided.
 4. Reply "done" in chat. **Expect:** "✓ completed: …" receipt, alarm
    cancelled when no tasks remain (Debug menu: next alarm none).
+
+## T9 — Multiple tasks due at once: one notification each
+1. Inject two one-time tasks due in ~1 min (e.g. "call mom", "submit report"),
+   relaunch so `NudgeScheduler` picks them up.
+2. **Failure path (invalid key):** wait for the cycle. **Expect:** *two*
+   separate notifications, one per task, each showing the raw task text with
+   its own Done / Snooze 30m buttons. Tapping Done on one dismisses only that
+   notification (the other stays) and deletes only that task from the DB.
+3. **Success path (valid key):** repeat with a real key. **Expect:** two
+   notifications, each with the model's phrased nudge for *that* task, buttons
+   targeting the correct task id. Verify in LOG "nudge notification posted for
+   task N" appears once per task.
+4. **Give-up summary:** drive one task to `nudge_fail_count = 4` (as in T6)
+   with two tasks due. **Expect:** a single buttonless summary notification
+   listing both, not per-task notifications.
