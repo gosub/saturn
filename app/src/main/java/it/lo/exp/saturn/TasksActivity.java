@@ -1,11 +1,13 @@
 package it.lo.exp.saturn;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -18,6 +20,8 @@ import java.util.Locale;
 /** Direct, mostly LLM-free task management: the active tasks grouped by when
  *  they next fire. */
 public class TasksActivity extends Activity {
+
+    private static final int SNOOZE_MINUTES = 30;
 
     private Database db;
     private ListView list;
@@ -39,6 +43,10 @@ public class TasksActivity extends Activity {
         empty = findViewById(R.id.tasks_empty);
         adapter = new TaskListAdapter(this, rows);
         list.setAdapter(adapter);
+        list.setOnItemClickListener((parent, view, position, id) -> {
+            TaskListAdapter.Row row = rows.get(position);
+            if (!row.isHeader()) showTaskActions(row.task);
+        });
         findViewById(R.id.tasks_back).setOnClickListener(v -> finish());
     }
 
@@ -55,6 +63,41 @@ public class TasksActivity extends Activity {
         rows.addAll(buildRows(tasks));
         adapter.notifyDataSetChanged();
         empty.setVisibility(rows.isEmpty() ? View.VISIBLE : View.GONE);
+    }
+
+    private void showTaskActions(Task t) {
+        List<String> labels = new ArrayList<>();
+        List<Runnable> handlers = new ArrayList<>();
+
+        // Completing a recurring task is meaningless (it repeats); use Delete to
+        // stop it, mirroring the executor's complete-recurring guard.
+        if (!t.recurring) {
+            labels.add(getString(R.string.action_complete));
+            handlers.add(() -> apply(() -> db.completeTask(t.id), R.string.toast_completed));
+        }
+        labels.add(getString(R.string.action_snooze));
+        handlers.add(() -> {
+            String next = NudgeService.isoPlusMinutes(System.currentTimeMillis(), SNOOZE_MINUTES);
+            apply(() -> db.setNextNudgeAt(t.id, next), R.string.toast_snoozed);
+        });
+        labels.add(getString(R.string.action_delete));
+        handlers.add(() -> apply(() -> db.deleteTask(t.id), R.string.toast_deleted));
+
+        new AlertDialog.Builder(this)
+            .setTitle((t.recurring ? "↻ " : "") + t.description)
+            .setItems(labels.toArray(new String[0]), (d, which) -> handlers.get(which).run())
+            .show();
+    }
+
+    /** Apply one mutation atomically, reschedule the alarm, refresh and confirm.
+     *  No LLM, no network. */
+    private void apply(Runnable mutation, int toastRes) {
+        synchronized (db) {
+            db.runInTransaction(mutation);
+            NudgeScheduler.scheduleNext(this, db);
+        }
+        refresh();
+        Toast.makeText(this, toastRes, Toast.LENGTH_SHORT).show();
     }
 
     /** Sort by next reminder, then group into Today / This week / Later /

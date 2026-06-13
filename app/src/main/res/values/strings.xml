@@ -29,6 +29,12 @@
     <string name="empty_tasks_hint">No tasks yet. Add one from the chat.</string>
     <string name="bucket_later">Later</string>
     <string name="bucket_no_reminder">No reminder</string>
+    <string name="action_complete">Complete</string>
+    <string name="action_snooze">Snooze 30 min</string>
+    <string name="action_delete">Delete</string>
+    <string name="toast_completed">Completed</string>
+    <string name="toast_snoozed">Snoozed 30 min</string>
+    <string name="toast_deleted">Deleted</string>
     <string name="active_tasks">Active tasks (%1$d):</string>
     <string name="not_set">not set</string>
     <string name="label_today">Today:</string>
