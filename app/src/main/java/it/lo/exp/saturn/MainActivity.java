@@ -22,11 +22,8 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.PopupMenu;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
-import java.util.Locale;
 import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -102,7 +99,8 @@ public class MainActivity extends Activity {
             return false;
         });
 
-        findViewById(R.id.tasks_btn).setOnClickListener(v -> showTasks());
+        findViewById(R.id.tasks_btn).setOnClickListener(v ->
+            startActivity(new Intent(this, TasksActivity.class)));
 
         findViewById(R.id.overflow_btn).setOnClickListener(this::showOverflowMenu);
 
@@ -323,83 +321,16 @@ public class MainActivity extends Activity {
 
     private void showOverflowMenu(View anchor) {
         PopupMenu menu = new PopupMenu(this, anchor);
-        menu.getMenu().add(0, 1, 0, getString(R.string.menu_today));
-        menu.getMenu().add(0, 2, 1, getString(R.string.menu_week));
-        menu.getMenu().add(0, 3, 2, getString(R.string.menu_debug));
-        menu.getMenu().add(0, 4, 3, getString(R.string.menu_settings));
+        menu.getMenu().add(0, 3, 0, getString(R.string.menu_debug));
+        menu.getMenu().add(0, 4, 1, getString(R.string.menu_settings));
         menu.setOnMenuItemClickListener((MenuItem item) -> {
             switch (item.getItemId()) {
-                case 1: showPeriodSummary(false); return true;
-                case 2: showPeriodSummary(true);  return true;
                 case 3: showDebug();              return true;
                 case 4: startActivity(new Intent(this, SettingsActivity.class)); return true;
             }
             return false;
         });
         menu.show();
-    }
-
-    private void showTasks() {
-        List<Task> tasks;
-        synchronized (db) { tasks = db.getTasks(); }
-        if (tasks.isEmpty()) {
-            addSystemMessage(getString(R.string.no_active_tasks));
-            return;
-        }
-        StringBuilder sb = new StringBuilder(getString(R.string.active_tasks, tasks.size()) + "\n");
-        for (Task t : tasks) {
-            String nudge = (t.nextNudgeAt != null && !t.nextNudgeAt.isEmpty())
-                ? t.nextNudgeAt : getString(R.string.not_set);
-            sb.append("\n  ").append(t.id).append(". ");
-            if (t.recurring) sb.append("\u21bb ");
-            sb.append(t.description).append("\n     \u2192 ").append(nudge);
-            if (t.recurMinutes != null && t.recurMinutes > 0) {
-                sb.append(" (every ").append(ActionExecutor.formatInterval(t.recurMinutes)).append(")");
-            }
-        }
-        addSystemMessage(sb.toString().trim());
-    }
-
-    private void showPeriodSummary(boolean week) {
-        Calendar cal = Calendar.getInstance();
-        cal.set(Calendar.HOUR_OF_DAY, 0);
-        cal.set(Calendar.MINUTE, 0);
-        cal.set(Calendar.SECOND, 0);
-        cal.set(Calendar.MILLISECOND, 0);
-        if (week) {
-            int dow = cal.get(Calendar.DAY_OF_WEEK);
-            int toMonday = (dow == Calendar.SUNDAY) ? -6 : Calendar.MONDAY - dow;
-            cal.add(Calendar.DAY_OF_MONTH, toMonday);
-        }
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
-        String from = sdf.format(cal.getTime());
-        if (week) cal.add(Calendar.DAY_OF_MONTH, 6);
-        cal.set(Calendar.HOUR_OF_DAY, 23);
-        cal.set(Calendar.MINUTE, 59);
-        cal.set(Calendar.SECOND, 59);
-        String to = sdf.format(cal.getTime());
-
-        List<Task> tasks;
-        synchronized (db) { tasks = db.getTasksForPeriod(from, to); }
-
-        String label = getString(week ? R.string.label_week : R.string.label_today);
-        if (tasks.isEmpty()) {
-            addSystemMessage(label + "\n" + getString(R.string.nothing_scheduled));
-            return;
-        }
-        StringBuilder sb = new StringBuilder(label + "\n");
-        for (Task t : tasks) {
-            String time = "";
-            if (t.nextNudgeAt != null && t.nextNudgeAt.length() >= 16) {
-                time = " \u2014 " + t.nextNudgeAt.substring(11, 16);
-                if (week && t.nextNudgeAt.length() >= 10) {
-                    time = " \u2014 " + t.nextNudgeAt.substring(5, 10) + " " + t.nextNudgeAt.substring(11, 16);
-                }
-            }
-            sb.append("\n  ").append(t.recurring ? "\u21bb " : "\u2022 ")
-              .append(t.description).append(time);
-        }
-        addSystemMessage(sb.toString().trim());
     }
 
     private void showDebug() {
@@ -431,7 +362,11 @@ public class MainActivity extends Activity {
             sb.append("\n       next: ")
               .append(t.nextNudgeAt != null ? t.nextNudgeAt : "not set");
         }
-        addSystemMessage(sb.toString().trim());
+        new AlertDialog.Builder(this)
+            .setTitle(R.string.menu_debug)
+            .setMessage(sb.toString().trim())
+            .setPositiveButton(R.string.ok, null)
+            .show();
     }
 
     // ---- Typing indicator ----

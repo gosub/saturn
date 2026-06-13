@@ -28,6 +28,8 @@
 
         <activity android:name=".SettingsActivity" />
 
+        <activity android:name=".TasksActivity" />
+
         <service
             android:name=".NudgeService"
             android:foregroundServiceType="dataSync"

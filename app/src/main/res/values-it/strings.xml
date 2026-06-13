@@ -25,6 +25,9 @@
 
     <!-- Task / period summaries -->
     <string name="no_active_tasks">Nessuna attività attiva.</string>
+    <string name="empty_tasks_hint">Nessuna attività. Aggiungine una dalla chat.</string>
+    <string name="bucket_later">Più tardi</string>
+    <string name="bucket_no_reminder">Senza promemoria</string>
     <string name="active_tasks">Attività attive (%1$d):</string>
     <string name="not_set">non impostato</string>
     <string name="label_today">Oggi:</string>
