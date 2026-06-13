@@ -219,7 +219,7 @@ public class MainActivity extends Activity {
                     AgentClient.AgentResponse resp = new AgentClient()
                         .chat(apiKey, model, systemPrompt, history, null);
 
-                    List<String> receipts;
+                    List<Receipt> receipts;
                     synchronized (db) {
                         receipts = ActionExecutor.execute(resp.actions, db,
                             s -> prefs.edit().putString("schedule", s).apply());
@@ -230,11 +230,12 @@ public class MainActivity extends Activity {
                         ? resp.reply : "(no reply)";
                     Log.d(TAG, "chat: reply=\"" + reply + "\" actions=" + resp.actions.size());
 
+                    final String receiptText = formatReceipts(receipts);
                     runOnUiThread(() -> {
                         hideTypingIndicator();
                         addBotMessage(reply);
-                        if (!receipts.isEmpty()) {
-                            addSystemMessage(String.join("\n", receipts));
+                        if (!receiptText.isEmpty()) {
+                            addSystemMessage(receiptText);
                         }
                         setInputEnabled(true);
                     });
@@ -464,6 +465,56 @@ public class MainActivity extends Activity {
 
     private void updateEmptyHint() {
         emptyHint.setVisibility(messages.isEmpty() ? android.view.View.VISIBLE : android.view.View.GONE);
+    }
+
+    private static String formatReceipts(List<Receipt> receipts) {
+        StringBuilder sb = new StringBuilder();
+        for (Receipt r : receipts) {
+            if (sb.length() > 0) sb.append('\n');
+            sb.append(formatReceipt(r));
+        }
+        return sb.toString();
+    }
+
+    private static String formatReceipt(Receipt r) {
+        switch (r.kind) {
+            case ADDED:
+                return "✓ added: " + r.text + " → " + r.time + intervalSuffix(r.recurMinutes);
+            case ADDED_NO_TIME:
+                return "⚠ added without reminder: " + r.text;
+            case ADDED_TIME_REJECTED:
+                return "⚠ added without reminder (time rejected: " + r.rejectedTime + "): " + r.text;
+            case UPDATED:
+                return r.time != null
+                    ? "✓ updated: " + r.text + " → " + r.time + intervalSuffix(r.recurMinutes)
+                    : "✓ updated: " + r.text;
+            case UPDATED_TIME_REJECTED:
+                return "⚠ updated, but time rejected (" + r.rejectedTime + "): " + r.text;
+            case UPDATE_UNKNOWN:
+                return "⚠ update failed: unknown task " + r.id;
+            case COMPLETED:
+                return "✓ completed: " + r.text;
+            case COMPLETE_RECURRING:
+                return "⚠ not completed (recurring): " + r.text;
+            case COMPLETE_UNKNOWN:
+                return "⚠ complete failed: unknown task " + r.id;
+            case DELETED:
+                return "✓ deleted: " + r.text;
+            case DELETE_UNKNOWN:
+                return "⚠ delete failed: unknown task " + r.id;
+            case SCHEDULE_UPDATED:
+                return "✓ schedule updated: " + r.text;
+            case SNOOZED:
+                return "✓ snoozed " + r.minutes + " min: " + r.text;
+            case SNOOZE_UNKNOWN:
+                return "⚠ snooze failed: unknown task " + r.id;
+        }
+        return "";
+    }
+
+    private static String intervalSuffix(Integer minutes) {
+        if (minutes == null || minutes <= 0) return "";
+        return ", repeats every " + ActionExecutor.formatInterval(minutes);
     }
 
     private static String friendlyError(Exception e) {

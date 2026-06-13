@@ -20,12 +20,12 @@ public class ActionExecutor {
         void setSchedule(String schedule);
     }
 
-    /** Applies the agent's actions and returns one receipt line per action,
+    /** Applies the agent's actions and returns one receipt per action,
      *  describing what actually happened in the database (not what the model
-     *  claims in its reply). */
-    public static List<String> execute(List<AgentClient.Action> actions,
-                                       TaskStore db, ScheduleWriter scheduleWriter) {
-        List<String> receipts = new ArrayList<>();
+     *  claims in its reply). Receipts are structured; the UI formats them. */
+    public static List<Receipt> execute(List<AgentClient.Action> actions,
+                                        TaskStore db, ScheduleWriter scheduleWriter) {
+        List<Receipt> receipts = new ArrayList<>();
         if (actions == null) return receipts;
         for (AgentClient.Action a : actions) {
             Log.d(TAG, "action: type=" + a.type + " id=" + a.id + " desc=" + a.description);
@@ -40,21 +40,19 @@ public class ActionExecutor {
                     String addTime = validatedFutureTime(a.nextNudgeAt);
                     if (addTime != null) {
                         db.setNextNudgeAt(t.id, addTime);
-                        receipts.add("✓ added: " + a.description + " → " + addTime
-                            + intervalSuffix(a.recurMinutes));
+                        receipts.add(Receipt.added(a.description, addTime, a.recurMinutes));
                     } else if (a.nextNudgeAt != null && !a.nextNudgeAt.isEmpty()) {
                         Log.w(TAG, "add_task: rejected invalid/past next_nudge_at: " + a.nextNudgeAt);
-                        receipts.add("⚠ added without reminder (time rejected: "
-                            + a.nextNudgeAt + "): " + a.description);
+                        receipts.add(Receipt.addedTimeRejected(a.description, a.nextNudgeAt));
                     } else {
-                        receipts.add("⚠ added without reminder: " + a.description);
+                        receipts.add(Receipt.addedNoTime(a.description));
                     }
                     break;
                 }
                 case "update_task": {
                     if (db.getTask(a.id) == null) {
                         Log.w(TAG, "update_task: unknown task id " + a.id);
-                        receipts.add("⚠ update failed: unknown task " + a.id);
+                        receipts.add(Receipt.unknownTask(Receipt.Kind.UPDATE_UNKNOWN, a.id));
                         break;
                     }
                     if (a.description != null && !a.description.isEmpty()) {
@@ -76,13 +74,11 @@ public class ActionExecutor {
                     }
                     Task t = db.getTask(a.id);
                     if (updTime != null) {
-                        receipts.add("✓ updated: " + t.description + " → " + updTime
-                            + intervalSuffix(a.recurMinutes));
+                        receipts.add(Receipt.updated(t.description, updTime, a.recurMinutes));
                     } else if (a.nextNudgeAt != null && !a.nextNudgeAt.isEmpty()) {
-                        receipts.add("⚠ updated, but time rejected ("
-                            + a.nextNudgeAt + "): " + t.description);
+                        receipts.add(Receipt.updatedTimeRejected(t.description, a.nextNudgeAt));
                     } else {
-                        receipts.add("✓ updated: " + t.description);
+                        receipts.add(Receipt.updated(t.description, null, null));
                     }
                     break;
                 }
@@ -90,15 +86,15 @@ public class ActionExecutor {
                     Task ct = db.getTask(a.id);
                     if (ct == null) {
                         Log.w(TAG, "complete_task: unknown task id " + a.id);
-                        receipts.add("⚠ complete failed: unknown task " + a.id);
+                        receipts.add(Receipt.unknownTask(Receipt.Kind.COMPLETE_UNKNOWN, a.id));
                         break;
                     }
                     if (ct.recurring) {
                         Log.w(TAG, "skipping complete_task on recurring task " + a.id);
-                        receipts.add("⚠ not completed (recurring): " + ct.description);
+                        receipts.add(Receipt.completeRecurring(ct.description));
                     } else {
                         db.completeTask(a.id);
-                        receipts.add("✓ completed: " + ct.description);
+                        receipts.add(Receipt.completed(ct.description));
                     }
                     break;
                 }
@@ -106,24 +102,24 @@ public class ActionExecutor {
                     Task dt = db.getTask(a.id);
                     if (dt == null) {
                         Log.w(TAG, "delete_task: unknown task id " + a.id);
-                        receipts.add("⚠ delete failed: unknown task " + a.id);
+                        receipts.add(Receipt.unknownTask(Receipt.Kind.DELETE_UNKNOWN, a.id));
                         break;
                     }
                     db.deleteTask(a.id);
-                    receipts.add("✓ deleted: " + dt.description);
+                    receipts.add(Receipt.deleted(dt.description));
                     break;
                 }
                 case "update_schedule":
                     if (a.schedule != null) {
                         scheduleWriter.setSchedule(a.schedule);
-                        receipts.add("✓ schedule updated: " + a.schedule);
+                        receipts.add(Receipt.scheduleUpdated(a.schedule));
                     }
                     break;
                 case "snooze_task": {
                     Task st = db.getTask(a.id);
                     if (st == null) {
                         Log.w(TAG, "snooze_task: unknown task id " + a.id);
-                        receipts.add("⚠ snooze failed: unknown task " + a.id);
+                        receipts.add(Receipt.unknownTask(Receipt.Kind.SNOOZE_UNKNOWN, a.id));
                         break;
                     }
                     int mins = a.minutes > 0 ? a.minutes : 30;
@@ -133,7 +129,7 @@ public class ActionExecutor {
                         .format(cal.getTime());
                     db.setNextNudgeAt(a.id, snoozeTime);
                     Log.d(TAG, "snooze_task " + a.id + " by " + mins + " min → " + snoozeTime);
-                    receipts.add("✓ snoozed " + mins + " min: " + st.description);
+                    receipts.add(Receipt.snoozed(mins, st.description));
                     break;
                 }
                 default:
@@ -141,11 +137,6 @@ public class ActionExecutor {
             }
         }
         return receipts;
-    }
-
-    private static String intervalSuffix(Integer minutes) {
-        if (minutes == null || minutes <= 0) return "";
-        return ", repeats every " + formatInterval(minutes);
     }
 
     static String formatInterval(int minutes) {
