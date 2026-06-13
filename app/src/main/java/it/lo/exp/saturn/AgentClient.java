@@ -46,6 +46,7 @@ public class AgentClient {
         @SerializedName("next_nudge_at") public String nextNudgeAt;
         public String schedule;
         public Boolean recurring; // null = not specified
+        @SerializedName("recur_minutes") public Integer recurMinutes; // fixed repeat interval
         public int minutes; // for snooze_task
     }
 
@@ -188,15 +189,19 @@ public class AgentClient {
                     ? t.nextNudgeAt : "not set";
                 String prefix = t.recurring ? "\u21bb " : "";
                 sb.append("  ").append(t.id).append(". ").append(prefix)
-                  .append(t.description).append(" \u2014 next nudge: ").append(nudge).append("\n");
+                  .append(t.description).append(" \u2014 next nudge: ").append(nudge);
+                if (t.recurMinutes != null && t.recurMinutes > 0) {
+                    sb.append(" (every ").append(t.recurMinutes).append(" min)");
+                }
+                sb.append("\n");
             }
             sb.append("\n");
         }
         sb.append("Respond ONLY with a JSON object: {\"reply\": \"...\", \"actions\": [...]}\n");
         sb.append("No text outside the JSON. If no actions are needed, use \"actions\": [].\n\n");
         sb.append("Available actions:\n");
-        sb.append("  {\"type\": \"add_task\",        \"description\": \"...\", \"next_nudge_at\": \"ISO8601 (required)\", \"recurring\": true}\n");
-        sb.append("  {\"type\": \"update_task\",     \"id\": N, \"description\": \"...\", \"next_nudge_at\": \"ISO8601\", \"recurring\": true}\n");
+        sb.append("  {\"type\": \"add_task\",        \"description\": \"...\", \"next_nudge_at\": \"ISO8601 (required)\", \"recurring\": true, \"recur_minutes\": 1440}\n");
+        sb.append("  {\"type\": \"update_task\",     \"id\": N, \"description\": \"...\", \"next_nudge_at\": \"ISO8601\", \"recurring\": true, \"recur_minutes\": 1440}\n");
         sb.append("  {\"type\": \"complete_task\",   \"id\": N}\n");
         sb.append("  {\"type\": \"delete_task\",     \"id\": N}\n");
         sb.append("  {\"type\": \"update_schedule\", \"schedule\": \"...\"}\n");
@@ -204,6 +209,8 @@ public class AgentClient {
         sb.append("Always use numeric id from the task list. next_nudge_at is required for add_task.\n");
         sb.append("next_nudge_at must be ISO 8601 (e.g. 2026-03-21T09:00:00). Respect the user's schedule.\n");
         sb.append("Set recurring: true for habitual/repeating tasks; recurring: false in update_task stops the repetition.\n");
+        sb.append("For tasks repeating at a fixed interval also set recur_minutes (e.g. 1440 = daily);\n");
+        sb.append("they are then rescheduled automatically after each nudge.\n");
         sb.append("Recurring tasks (\u21bb) must never be completed \u2014 use update_task with the next next_nudge_at.\n");
         return sb.toString();
     }
@@ -221,6 +228,8 @@ public class AgentClient {
         sb.append("The following tasks are due for a nudge:\n");
         for (Task t : tasks) {
             String prefix = t.recurring ? "\u21bb " : "";
+            String interval = (t.recurMinutes != null && t.recurMinutes > 0)
+                ? " (every " + t.recurMinutes + " min)" : "";
             String late = "";
             if (t.nextNudgeAt != null && !t.nextNudgeAt.isEmpty()) {
                 try {
@@ -231,12 +240,13 @@ public class AgentClient {
                 } catch (Exception ignored) {}
             }
             sb.append("  ").append(t.id).append(". ").append(prefix)
-              .append(t.description).append(late).append("\n");
+              .append(t.description).append(interval).append(late).append("\n");
         }
         sb.append("\nSend the user a short nudge. One task, one sentence, no fluff.\n");
         sb.append("If multiple tasks are due, pick the most urgent one.\n");
         sb.append("After nudging:\n");
-        sb.append("  - Recurring (\u21bb): use update_task to set the next occurrence's next_nudge_at.\n");
+        sb.append("  - Recurring (\u21bb) with a fixed interval: rescheduled automatically, no action needed.\n");
+        sb.append("  - Recurring (\u21bb) without an interval: use update_task to set the next occurrence's next_nudge_at.\n");
         sb.append("  - One-time: use update_task or snooze_task to pick the next reminder time; if you do nothing it is re-nudged in about an hour.\n");
         sb.append("Never complete or delete a task here: only the user can declare a task done.\n");
         sb.append("If no nudge is appropriate right now, return empty reply.\n\n");

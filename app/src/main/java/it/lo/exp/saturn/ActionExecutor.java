@@ -24,11 +24,17 @@ public class ActionExecutor {
             Log.d(TAG, "action: type=" + a.type + " id=" + a.id + " desc=" + a.description);
             switch (a.type != null ? a.type : "") {
                 case "add_task": {
-                    Task t = db.addTask(a.description, Boolean.TRUE.equals(a.recurring));
+                    boolean rec = Boolean.TRUE.equals(a.recurring)
+                        || (a.recurMinutes != null && a.recurMinutes > 0);
+                    Task t = db.addTask(a.description, rec);
+                    if (a.recurMinutes != null && a.recurMinutes > 0) {
+                        db.setRecurMinutes(t.id, a.recurMinutes);
+                    }
                     String addTime = validatedFutureTime(a.nextNudgeAt);
                     if (addTime != null) {
                         db.setNextNudgeAt(t.id, addTime);
-                        receipts.add("✓ added: " + a.description + " → " + addTime);
+                        receipts.add("✓ added: " + a.description + " → " + addTime
+                            + intervalSuffix(a.recurMinutes));
                     } else if (a.nextNudgeAt != null && !a.nextNudgeAt.isEmpty()) {
                         Log.w(TAG, "add_task: rejected invalid/past next_nudge_at: " + a.nextNudgeAt);
                         receipts.add("⚠ added without reminder (time rejected: "
@@ -53,12 +59,18 @@ public class ActionExecutor {
                     } else if (a.nextNudgeAt != null && !a.nextNudgeAt.isEmpty()) {
                         Log.w(TAG, "update_task " + a.id + ": rejected invalid/past next_nudge_at: " + a.nextNudgeAt);
                     }
+                    if (a.recurMinutes != null && a.recurMinutes > 0) {
+                        db.setRecurMinutes(a.id, a.recurMinutes);
+                        db.setRecurring(a.id, true);
+                    }
                     if (a.recurring != null) {
                         db.setRecurring(a.id, a.recurring);
+                        if (!a.recurring) db.setRecurMinutes(a.id, null);
                     }
                     Task t = db.getTask(a.id);
                     if (updTime != null) {
-                        receipts.add("✓ updated: " + t.description + " → " + updTime);
+                        receipts.add("✓ updated: " + t.description + " → " + updTime
+                            + intervalSuffix(a.recurMinutes));
                     } else if (a.nextNudgeAt != null && !a.nextNudgeAt.isEmpty()) {
                         receipts.add("⚠ updated, but time rejected ("
                             + a.nextNudgeAt + "): " + t.description);
@@ -122,6 +134,17 @@ public class ActionExecutor {
             }
         }
         return receipts;
+    }
+
+    private static String intervalSuffix(Integer minutes) {
+        if (minutes == null || minutes <= 0) return "";
+        return ", repeats every " + formatInterval(minutes);
+    }
+
+    static String formatInterval(int minutes) {
+        if (minutes % 1440 == 0) return (minutes / 1440) + "d";
+        if (minutes % 60 == 0)   return (minutes / 60) + "h";
+        return minutes + "m";
     }
 
     /** Returns the time normalized to plain device-local yyyy-MM-dd'T'HH:mm:ss if it

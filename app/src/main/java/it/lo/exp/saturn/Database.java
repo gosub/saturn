@@ -12,7 +12,7 @@ import java.util.List;
 public class Database extends SQLiteOpenHelper {
 
     private static final String DB_NAME = "saturn.db";
-    private static final int DB_VERSION = 2;
+    private static final int DB_VERSION = 3;
     private static final int MAX_MESSAGES = 200;
 
     private static Database instance;
@@ -36,7 +36,8 @@ public class Database extends SQLiteOpenHelper {
             "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
             "description TEXT NOT NULL, " +
             "next_nudge_at TEXT, " +
-            "recurring INTEGER NOT NULL DEFAULT 0" +
+            "recurring INTEGER NOT NULL DEFAULT 0, " +
+            "recur_minutes INTEGER" +
             ")"
         );
         db.execSQL(
@@ -60,6 +61,9 @@ public class Database extends SQLiteOpenHelper {
                 "ts INTEGER NOT NULL" +
                 ")"
             );
+        }
+        if (oldVersion < 3) {
+            db.execSQL("ALTER TABLE tasks ADD COLUMN recur_minutes INTEGER");
         }
     }
 
@@ -105,6 +109,17 @@ public class Database extends SQLiteOpenHelper {
         SQLiteDatabase db = getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put("recurring", recurring ? 1 : 0);
+        db.update("tasks", cv, "id = ?", new String[]{String.valueOf(id)});
+    }
+
+    public void setRecurMinutes(long id, Integer minutes) {
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        if (minutes != null && minutes > 0) {
+            cv.put("recur_minutes", minutes);
+        } else {
+            cv.putNull("recur_minutes");
+        }
         db.update("tasks", cv, "id = ?", new String[]{String.valueOf(id)});
     }
 
@@ -227,6 +242,8 @@ public class Database extends SQLiteOpenHelper {
         int nudgeCol = c.getColumnIndexOrThrow("next_nudge_at");
         String nudgeAt = c.isNull(nudgeCol) ? null : c.getString(nudgeCol);
         boolean recurring = c.getInt(c.getColumnIndexOrThrow("recurring")) != 0;
-        return new Task(id, desc, nudgeAt, recurring);
+        int recurCol = c.getColumnIndexOrThrow("recur_minutes");
+        Integer recurMinutes = c.isNull(recurCol) ? null : c.getInt(recurCol);
+        return new Task(id, desc, nudgeAt, recurring, recurMinutes);
     }
 }

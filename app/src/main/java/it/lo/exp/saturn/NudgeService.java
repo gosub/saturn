@@ -102,11 +102,37 @@ public class NudgeService extends Service {
      *  next_nudge_at must never survive the cycle or the alarm refires at once. */
     private void rescheduleLeftDue(Database db, String nowISO, long nowMillis) {
         for (Task t : db.getDueTasks(nowISO)) {
-            int minutes = t.recurring ? 24 * 60 : 60;
-            String next = isoPlusMinutes(nowMillis, minutes);
+            String next;
+            if (t.recurring && t.recurMinutes != null && t.recurMinutes > 0) {
+                next = nextOccurrence(t.nextNudgeAt, t.recurMinutes, nowMillis);
+            } else if (t.recurring) {
+                next = isoPlusMinutes(nowMillis, 24 * 60);
+            } else {
+                next = isoPlusMinutes(nowMillis, 60);
+            }
             Log.d(TAG, "task " + t.id + " left due by model, rescheduling to " + next);
             db.setNextNudgeAt(t.id, next);
         }
+    }
+
+    /** First anchor + k*interval strictly after now. Anchoring on the scheduled
+     *  time instead of now keeps fixed-interval tasks from drifting when a cycle
+     *  runs late or fails. Pure epoch arithmetic: a daily task shifts wall-clock
+     *  time across DST changes. */
+    static String nextOccurrence(String anchorISO, int intervalMinutes, long nowMillis) {
+        long step = intervalMinutes * 60_000L;
+        long base;
+        try {
+            base = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
+                .parse(anchorISO).getTime();
+        } catch (Exception e) {
+            base = nowMillis;
+        }
+        long next = base + step;
+        if (next <= nowMillis) {
+            next = base + ((nowMillis - base) / step + 1) * step;
+        }
+        return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).format(new Date(next));
     }
 
     /** The reminder itself must not depend on the API being reachable: deliver

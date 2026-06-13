@@ -307,6 +307,9 @@ public class MainActivity extends Activity {
             sb.append("\n  ").append(t.id).append(". ");
             if (t.recurring) sb.append("\u21bb ");
             sb.append(t.description).append("\n     \u2192 ").append(nudge);
+            if (t.recurMinutes != null && t.recurMinutes > 0) {
+                sb.append(" (every ").append(ActionExecutor.formatInterval(t.recurMinutes)).append(")");
+            }
         }
         addSystemMessage(sb.toString().trim());
     }
@@ -372,7 +375,13 @@ public class MainActivity extends Activity {
         sb.append("\ntasks (").append(tasks.size()).append("):\n");
         for (Task t : tasks) {
             sb.append("\n  [").append(t.id).append("] ").append(t.description);
-            if (t.recurring) sb.append(" [\u21bb]");
+            if (t.recurring) {
+                sb.append(" [\u21bb");
+                if (t.recurMinutes != null && t.recurMinutes > 0) {
+                    sb.append(" ").append(ActionExecutor.formatInterval(t.recurMinutes));
+                }
+                sb.append("]");
+            }
             sb.append("\n       next: ")
               .append(t.nextNudgeAt != null ? t.nextNudgeAt : "not set");
         }
