@@ -123,6 +123,18 @@ public class Database extends SQLiteOpenHelper implements TaskStore {
         db.update("tasks", cv, "id = ?", new String[]{String.valueOf(id)});
     }
 
+    @Override
+    public void runInTransaction(Runnable work) {
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try {
+            work.run();
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
     public void clearAllTasks() {
         getWritableDatabase().delete("tasks", null, null);
     }

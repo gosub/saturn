@@ -12,4 +12,8 @@ public interface TaskStore {
     void setRecurMinutes(long id, Integer minutes);
     void completeTask(long id);
     void deleteTask(long id);
+
+    /** Runs {@code work} as one atomic unit, so a read-modify-write spanning
+     *  several statements cannot interleave with a concurrent writer. */
+    void runInTransaction(Runnable work);
 }
