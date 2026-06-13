@@ -62,6 +62,34 @@
     <string name="toast_conversation_cleared">Conversation cleared</string>
     <string name="toast_tasks_cleared">All tasks cleared</string>
 
+    <!-- Action receipts (chat) -->
+    <string name="receipt_added">✓ added: %1$s → %2$s%3$s</string>
+    <string name="receipt_added_no_time">⚠ added without reminder: %1$s</string>
+    <string name="receipt_added_time_rejected">⚠ added without reminder (time rejected: %1$s): %2$s</string>
+    <string name="receipt_updated_time">✓ updated: %1$s → %2$s%3$s</string>
+    <string name="receipt_updated">✓ updated: %1$s</string>
+    <string name="receipt_updated_time_rejected">⚠ updated, but time rejected (%1$s): %2$s</string>
+    <string name="receipt_update_unknown">⚠ update failed: unknown task %1$d</string>
+    <string name="receipt_completed">✓ completed: %1$s</string>
+    <string name="receipt_complete_recurring">⚠ not completed (recurring): %1$s</string>
+    <string name="receipt_complete_unknown">⚠ complete failed: unknown task %1$d</string>
+    <string name="receipt_deleted">✓ deleted: %1$s</string>
+    <string name="receipt_delete_unknown">⚠ delete failed: unknown task %1$d</string>
+    <string name="receipt_schedule_updated">✓ schedule updated: %1$s</string>
+    <string name="receipt_snoozed">✓ snoozed %1$d min: %2$s</string>
+    <string name="receipt_snooze_unknown">⚠ snooze failed: unknown task %1$d</string>
+    <string name="interval_suffix">, repeats every %1$s</string>
+
+    <!-- Nudge service / notification actions -->
+    <string name="nudge_checking">Checking nudges…</string>
+    <string name="nudge_tasks_due">%1$d tasks due:</string>
+    <string name="nudge_raw_note">(I couldn\'t reach the model, this is a raw reminder.)</string>
+    <string name="nudge_gaveup_header">⚠ Gave up retrying. No reminder set for:</string>
+    <string name="nudge_gaveup_footer">Tell me when to remind you again.</string>
+    <string name="nudge_done">✓ Done: %1$s</string>
+    <string name="nudge_done_recurring">✓ Done for now: %1$s</string>
+    <string name="nudge_snoozed">⏰ Snoozed %1$d min: %2$s</string>
+
     <string-array name="language_names">
         <item>English</item>
         <item>Italiano</item>

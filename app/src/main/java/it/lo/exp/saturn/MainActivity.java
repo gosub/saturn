@@ -485,7 +485,7 @@ public class MainActivity extends Activity {
         emptyHint.setVisibility(messages.isEmpty() ? android.view.View.VISIBLE : android.view.View.GONE);
     }
 
-    private static String formatReceipts(List<Receipt> receipts) {
+    private String formatReceipts(List<Receipt> receipts) {
         StringBuilder sb = new StringBuilder();
         for (Receipt r : receipts) {
             if (sb.length() > 0) sb.append('\n');
@@ -494,45 +494,45 @@ public class MainActivity extends Activity {
         return sb.toString();
     }
 
-    private static String formatReceipt(Receipt r) {
+    private String formatReceipt(Receipt r) {
         switch (r.kind) {
             case ADDED:
-                return "✓ added: " + r.text + " → " + r.time + intervalSuffix(r.recurMinutes);
+                return getString(R.string.receipt_added, r.text, r.time, intervalSuffix(r.recurMinutes));
             case ADDED_NO_TIME:
-                return "⚠ added without reminder: " + r.text;
+                return getString(R.string.receipt_added_no_time, r.text);
             case ADDED_TIME_REJECTED:
-                return "⚠ added without reminder (time rejected: " + r.rejectedTime + "): " + r.text;
+                return getString(R.string.receipt_added_time_rejected, r.rejectedTime, r.text);
             case UPDATED:
                 return r.time != null
-                    ? "✓ updated: " + r.text + " → " + r.time + intervalSuffix(r.recurMinutes)
-                    : "✓ updated: " + r.text;
+                    ? getString(R.string.receipt_updated_time, r.text, r.time, intervalSuffix(r.recurMinutes))
+                    : getString(R.string.receipt_updated, r.text);
             case UPDATED_TIME_REJECTED:
-                return "⚠ updated, but time rejected (" + r.rejectedTime + "): " + r.text;
+                return getString(R.string.receipt_updated_time_rejected, r.rejectedTime, r.text);
             case UPDATE_UNKNOWN:
-                return "⚠ update failed: unknown task " + r.id;
+                return getString(R.string.receipt_update_unknown, r.id);
             case COMPLETED:
-                return "✓ completed: " + r.text;
+                return getString(R.string.receipt_completed, r.text);
             case COMPLETE_RECURRING:
-                return "⚠ not completed (recurring): " + r.text;
+                return getString(R.string.receipt_complete_recurring, r.text);
             case COMPLETE_UNKNOWN:
-                return "⚠ complete failed: unknown task " + r.id;
+                return getString(R.string.receipt_complete_unknown, r.id);
             case DELETED:
-                return "✓ deleted: " + r.text;
+                return getString(R.string.receipt_deleted, r.text);
             case DELETE_UNKNOWN:
-                return "⚠ delete failed: unknown task " + r.id;
+                return getString(R.string.receipt_delete_unknown, r.id);
             case SCHEDULE_UPDATED:
-                return "✓ schedule updated: " + r.text;
+                return getString(R.string.receipt_schedule_updated, r.text);
             case SNOOZED:
-                return "✓ snoozed " + r.minutes + " min: " + r.text;
+                return getString(R.string.receipt_snoozed, r.minutes, r.text);
             case SNOOZE_UNKNOWN:
-                return "⚠ snooze failed: unknown task " + r.id;
+                return getString(R.string.receipt_snooze_unknown, r.id);
         }
         return "";
     }
 
-    private static String intervalSuffix(Integer minutes) {
+    private String intervalSuffix(Integer minutes) {
         if (minutes == null || minutes <= 0) return "";
-        return ", repeats every " + ActionExecutor.formatInterval(minutes);
+        return getString(R.string.interval_suffix, ActionExecutor.formatInterval(minutes));
     }
 
     private String friendlyError(Exception e) {

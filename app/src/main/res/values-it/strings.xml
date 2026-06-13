@@ -61,4 +61,32 @@
     <string name="toast_conversation_cleared">Conversazione cancellata</string>
     <string name="toast_tasks_cleared">Tutte le attività cancellate</string>
 
+    <!-- Action receipts (chat) -->
+    <string name="receipt_added">✓ aggiunto: %1$s → %2$s%3$s</string>
+    <string name="receipt_added_no_time">⚠ aggiunto senza promemoria: %1$s</string>
+    <string name="receipt_added_time_rejected">⚠ aggiunto senza promemoria (orario rifiutato: %1$s): %2$s</string>
+    <string name="receipt_updated_time">✓ aggiornato: %1$s → %2$s%3$s</string>
+    <string name="receipt_updated">✓ aggiornato: %1$s</string>
+    <string name="receipt_updated_time_rejected">⚠ aggiornato, ma orario rifiutato (%1$s): %2$s</string>
+    <string name="receipt_update_unknown">⚠ aggiornamento fallito: attività sconosciuta %1$d</string>
+    <string name="receipt_completed">✓ completato: %1$s</string>
+    <string name="receipt_complete_recurring">⚠ non completato (ricorrente): %1$s</string>
+    <string name="receipt_complete_unknown">⚠ completamento fallito: attività sconosciuta %1$d</string>
+    <string name="receipt_deleted">✓ eliminato: %1$s</string>
+    <string name="receipt_delete_unknown">⚠ eliminazione fallita: attività sconosciuta %1$d</string>
+    <string name="receipt_schedule_updated">✓ disponibilità aggiornata: %1$s</string>
+    <string name="receipt_snoozed">✓ posticipato di %1$d min: %2$s</string>
+    <string name="receipt_snooze_unknown">⚠ posticipo fallito: attività sconosciuta %1$d</string>
+    <string name="interval_suffix">, si ripete ogni %1$s</string>
+
+    <!-- Nudge service / notification actions -->
+    <string name="nudge_checking">Controllo promemoria…</string>
+    <string name="nudge_tasks_due">%1$d attività in scadenza:</string>
+    <string name="nudge_raw_note">(Non sono riuscito a contattare il modello, questo è un promemoria grezzo.)</string>
+    <string name="nudge_gaveup_header">⚠ Ho smesso di riprovare. Nessun promemoria impostato per:</string>
+    <string name="nudge_gaveup_footer">Dimmi quando ricordartelo di nuovo.</string>
+    <string name="nudge_done">✓ Fatto: %1$s</string>
+    <string name="nudge_done_recurring">✓ Fatto per ora: %1$s</string>
+    <string name="nudge_snoozed">⏰ Posticipato di %1$d min: %2$s</string>
+
 </resources>

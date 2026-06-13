@@ -172,18 +172,17 @@ public class NudgeService extends Service {
             for (Task t : due) {
                 postTaskNotification(t, t.description);
             }
-            saveNudgeMessage(db, rawReminderText(due)
-                + "\n(I couldn\u2019t reach the model, this is a raw reminder.)");
+            saveNudgeMessage(db, rawReminderText(due) + "\n" + str(R.string.nudge_raw_note));
         }
 
         if (fails >= MAX_FAILURES) {
             prefs.edit().putInt("nudge_fail_count", 0).apply();
-            StringBuilder warn = new StringBuilder("⚠ Gave up retrying. No reminder set for:");
+            StringBuilder warn = new StringBuilder(str(R.string.nudge_gaveup_header));
             for (Task t : due) {
                 db.setNextNudgeAt(t.id, null);
                 warn.append("\n  \u2022 ").append(t.description);
             }
-            warn.append("\nTell me when to remind you again.");
+            warn.append("\n").append(str(R.string.nudge_gaveup_footer));
             postSummaryNotification(warn.toString());
             db.saveMessage(ChatMessage.ROLE_BOT, warn.toString(), System.currentTimeMillis());
             notifyMessagesChanged();
@@ -196,11 +195,17 @@ public class NudgeService extends Service {
         }
     }
 
-    private static String rawReminderText(List<Task> due) {
+    private String rawReminderText(List<Task> due) {
         if (due.size() == 1) return due.get(0).description;
-        StringBuilder sb = new StringBuilder(due.size() + " tasks due:");
+        StringBuilder sb = new StringBuilder(str(R.string.nudge_tasks_due, due.size()));
         for (Task t : due) sb.append("\n  \u2022 ").append(t.description);
         return sb.toString();
+    }
+
+    /** Resolves a user-facing string in the app's chosen language, independent
+     *  of the device locale. */
+    private String str(int resId, Object... args) {
+        return LocaleHelper.wrap(this).getString(resId, args);
     }
 
     static String isoPlusMinutes(long baseMillis, int minutes) {
@@ -259,7 +264,7 @@ public class NudgeService extends Service {
 
         return new Notification.Builder(this, SaturnApp.CHANNEL_SERVICE)
             .setContentTitle("Saturn")
-            .setContentText("Checking nudges\u2026")
+            .setContentText(str(R.string.nudge_checking))
             .setSmallIcon(android.R.drawable.ic_popup_sync)
             .setContentIntent(pi)
             .build();

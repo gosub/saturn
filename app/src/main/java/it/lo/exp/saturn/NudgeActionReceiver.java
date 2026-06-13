@@ -31,20 +31,23 @@ public class NudgeActionReceiver extends BroadcastReceiver {
             return;
         }
 
+        Context l10n = LocaleHelper.wrap(context);
         long now = System.currentTimeMillis();
         if (ACTION_DONE.equals(intent.getAction())) {
             if (t.recurring) {
                 // The nudge cycle already scheduled the next occurrence.
-                db.saveMessage(ChatMessage.ROLE_SYSTEM, "✓ Done for now: " + t.description, now);
+                db.saveMessage(ChatMessage.ROLE_SYSTEM,
+                    l10n.getString(R.string.nudge_done_recurring, t.description), now);
             } else {
                 db.completeTask(id);
-                db.saveMessage(ChatMessage.ROLE_SYSTEM, "✓ Done: " + t.description, now);
+                db.saveMessage(ChatMessage.ROLE_SYSTEM,
+                    l10n.getString(R.string.nudge_done, t.description), now);
             }
             Log.d(TAG, "notification action: done task " + id);
         } else if (ACTION_SNOOZE.equals(intent.getAction())) {
             db.setNextNudgeAt(id, NudgeService.isoPlusMinutes(now, SNOOZE_MINUTES));
             db.saveMessage(ChatMessage.ROLE_SYSTEM,
-                "⏰ Snoozed " + SNOOZE_MINUTES + " min: " + t.description, now);
+                l10n.getString(R.string.nudge_snoozed, SNOOZE_MINUTES, t.description), now);
             Log.d(TAG, "notification action: snoozed task " + id);
         }
         NudgeScheduler.scheduleNext(context, db);
