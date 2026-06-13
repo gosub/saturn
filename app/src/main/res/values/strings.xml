@@ -31,7 +31,12 @@
     <string name="bucket_no_reminder">No reminder</string>
     <string name="action_complete">Complete</string>
     <string name="action_snooze">Snooze 30 min</string>
+    <string name="action_edit_time">Edit reminder time</string>
+    <string name="action_edit_desc">Edit description</string>
     <string name="action_delete">Delete</string>
+    <string name="toast_time_past">That time is in the past.</string>
+    <string name="toast_time_set">Reminder updated</string>
+    <string name="toast_saved">Saved</string>
     <string name="toast_completed">Completed</string>
     <string name="toast_snoozed">Snoozed 30 min</string>
     <string name="toast_deleted">Deleted</string>

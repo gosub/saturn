@@ -30,7 +30,12 @@
     <string name="bucket_no_reminder">Senza promemoria</string>
     <string name="action_complete">Completa</string>
     <string name="action_snooze">Posticipa 30 min</string>
+    <string name="action_edit_time">Modifica orario</string>
+    <string name="action_edit_desc">Modifica descrizione</string>
     <string name="action_delete">Elimina</string>
+    <string name="toast_time_past">Quell\'orario è nel passato.</string>
+    <string name="toast_time_set">Promemoria aggiornato</string>
+    <string name="toast_saved">Salvato</string>
     <string name="toast_completed">Completato</string>
     <string name="toast_snoozed">Posticipato di 30 min</string>
     <string name="toast_deleted">Eliminato</string>

@@ -2,9 +2,12 @@ package it.lo.exp.saturn;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
 import android.content.Context;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -80,6 +83,10 @@ public class TasksActivity extends Activity {
             String next = NudgeService.isoPlusMinutes(System.currentTimeMillis(), SNOOZE_MINUTES);
             apply(() -> db.setNextNudgeAt(t.id, next), R.string.toast_snoozed);
         });
+        labels.add(getString(R.string.action_edit_time));
+        handlers.add(() -> editTime(t));
+        labels.add(getString(R.string.action_edit_desc));
+        handlers.add(() -> editDescription(t));
         labels.add(getString(R.string.action_delete));
         handlers.add(() -> apply(() -> db.deleteTask(t.id), R.string.toast_deleted));
 
@@ -98,6 +105,48 @@ public class TasksActivity extends Activity {
         }
         refresh();
         Toast.makeText(this, toastRes, Toast.LENGTH_SHORT).show();
+    }
+
+    /** Pick a date then a time; store it as next_nudge_at if it's in the future. */
+    private void editTime(Task t) {
+        Calendar seed = Calendar.getInstance();
+        long existing = parse(t.nextNudgeAt);
+        if (existing > 0) seed.setTimeInMillis(existing);
+
+        new DatePickerDialog(this, (view, year, month, day) ->
+            new TimePickerDialog(this, (tv, hour, minute) -> {
+                Calendar picked = Calendar.getInstance();
+                picked.set(year, month, day, hour, minute, 0);
+                picked.set(Calendar.MILLISECOND, 0);
+                String iso = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
+                    .format(picked.getTime());
+                String valid = ActionExecutor.validatedFutureTime(iso);
+                if (valid == null) {
+                    Toast.makeText(this, R.string.toast_time_past, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                apply(() -> db.setNextNudgeAt(t.id, valid), R.string.toast_time_set);
+            }, seed.get(Calendar.HOUR_OF_DAY), seed.get(Calendar.MINUTE), true).show(),
+            seed.get(Calendar.YEAR), seed.get(Calendar.MONTH), seed.get(Calendar.DAY_OF_MONTH)
+        ).show();
+    }
+
+    private void editDescription(Task t) {
+        EditText input = new EditText(this);
+        input.setText(t.description);
+        input.setSelection(input.getText().length());
+        new AlertDialog.Builder(this)
+            .setTitle(R.string.action_edit_desc)
+            .setView(input)
+            .setPositiveButton(R.string.save, (d, w) -> {
+                String desc = input.getText().toString().trim();
+                if (desc.isEmpty()) return;
+                synchronized (db) { db.runInTransaction(() -> db.updateTask(t.id, desc)); }
+                refresh();
+                Toast.makeText(this, R.string.toast_saved, Toast.LENGTH_SHORT).show();
+            })
+            .setNegativeButton(R.string.cancel, null)
+            .show();
     }
 
     /** Sort by next reminder, then group into Today / This week / Later /
