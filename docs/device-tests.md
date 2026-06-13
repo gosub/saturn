@@ -70,6 +70,26 @@ Conventions:
 4. Reply "done" in chat. **Expect:** "✓ completed: …" receipt, alarm
    cancelled when no tasks remain (Debug menu: next alarm none).
 
+## T10 — Task screen (direct management, mostly no LLM)
+1. With a few tasks at different times (some recurring, one with no reminder),
+   tap **Tasks**. **Expect:** tasks grouped under Today / This week / Later /
+   No reminder, sorted by time; recurring shown with ↻ and interval.
+2. Tap a one-time task → **Complete**. **Expect:** row gone, toast, alarm
+   rescheduled, no network call (LOG shows no openrouter request).
+3. Tap a task → **Snooze 30 min**. **Expect:** it moves ~30 min later (may
+   change bucket), toast.
+4. Tap a task → **Edit reminder time**, pick a past time. **Expect:** "That
+   time is in the past." toast, no change. Pick a future time. **Expect:** row
+   re-buckets to the new time.
+5. Tap a recurring task. **Expect:** no Complete entry (only Snooze / Edit /
+   Ask / Delete). Delete it. **Expect:** row gone.
+6. **Ask Saturn (needs a real key):** tap a task → **Ask Saturn to change
+   this** → "move to tomorrow 9am". **Expect:** "Asking Saturn…", then the list
+   refreshes with the new time and a receipt toast. With an invalid key:
+   "Couldn't reach Saturn. Try again."
+7. Switch language to Italian in Settings, return to chat (it recreates), open
+   Tasks. **Expect:** buckets, actions, toasts and receipts all in Italian.
+
 ## T9 — Multiple tasks due at once: one notification each
 1. Inject two one-time tasks due in ~1 min (e.g. "call mom", "submit report"),
    relaunch so `NudgeScheduler` picks them up.
