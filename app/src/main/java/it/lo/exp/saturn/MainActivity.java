@@ -35,6 +35,7 @@ public class MainActivity extends Activity {
 
     private static final String TAG = "Saturn";
     private static final int REQUEST_NOTIFICATIONS = 1001;
+    static final String ACTION_MESSAGES_CHANGED = "it.lo.exp.saturn.MESSAGES_CHANGED";
     private static final String[] DOTS = {"\u25cf  \u25cb  \u25cb", "\u25cb  \u25cf  \u25cb", "\u25cb  \u25cb  \u25cf"};
 
     private ListView chatList;
@@ -132,11 +133,36 @@ public class MainActivity extends Activity {
             .show();
     }
 
+    private final android.content.BroadcastReceiver refreshReceiver =
+        new android.content.BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                reloadMessages();
+            }
+        };
+
     @Override
     protected void onResume() {
         super.onResume();
         // The messages table is the single source of truth; NudgeService may
         // have appended nudges while we were backgrounded.
+        reloadMessages();
+        android.content.IntentFilter filter =
+            new android.content.IntentFilter(ACTION_MESSAGES_CHANGED);
+        if (Build.VERSION.SDK_INT >= 33) {
+            registerReceiver(refreshReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(refreshReceiver, filter);
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unregisterReceiver(refreshReceiver);
+    }
+
+    private void reloadMessages() {
         messages.clear();
         synchronized (db) { messages.addAll(db.loadMessages()); }
         if (typingMessage != null) messages.add(typingMessage);

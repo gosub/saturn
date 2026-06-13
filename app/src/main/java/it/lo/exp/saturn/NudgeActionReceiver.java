@@ -47,5 +47,7 @@ public class NudgeActionReceiver extends BroadcastReceiver {
             Log.d(TAG, "notification action: snoozed task " + id);
         }
         NudgeScheduler.scheduleNext(context, db);
+        context.sendBroadcast(new Intent(MainActivity.ACTION_MESSAGES_CHANGED)
+            .setPackage(context.getPackageName()));
     }
 }

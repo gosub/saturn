@@ -160,6 +160,7 @@ public class NudgeService extends Service {
             warn.append("\nTell me when to remind you again.");
             postNudgeNotification(warn.toString(), singleTask(due));
             db.saveMessage(ChatMessage.ROLE_BOT, warn.toString(), System.currentTimeMillis());
+            notifyMessagesChanged();
         } else {
             String retryAt = isoPlusMinutes(nowMillis, RETRY_MINUTES);
             for (Task t : due) {
@@ -204,10 +205,16 @@ public class NudgeService extends Service {
         }
     }
 
-    /** Nudges land in the shared messages table; the chat shows them on resume
-     *  and the model sees them as assistant turns. */
-    private static void saveNudgeMessage(Database db, String text) {
+    /** Nudges land in the shared messages table; the chat shows them live (or
+     *  on resume) and the model sees them as assistant turns. */
+    private void saveNudgeMessage(Database db, String text) {
         db.saveMessage(ChatMessage.ROLE_BOT, "⏰ " + text, System.currentTimeMillis());
+        notifyMessagesChanged();
+    }
+
+    private void notifyMessagesChanged() {
+        sendBroadcast(new Intent(MainActivity.ACTION_MESSAGES_CHANGED)
+            .setPackage(getPackageName()));
     }
 
     private Notification buildCheckingNotification() {
