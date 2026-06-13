@@ -50,9 +50,19 @@ public class KeystoreHelper {
         try {
             return decrypt(stored);
         } catch (Exception e) {
-            // Not yet encrypted (first run after upgrade) — return plain value as-is.
-            Log.d("Saturn", "api_key not encrypted yet, using plain value");
-            return stored;
+            // decrypt() fails in two distinct cases:
+            //  - the value predates encryption (first run after upgrade): it is the
+            //    plain key, so return it (it gets re-encrypted on the next save);
+            //  - the value is ciphertext we can no longer decrypt, e.g. restored onto
+            //    a new device where the Keystore key does not exist. Returning it
+            //    would send a Base64 blob as the bearer token, so treat it as unset
+            //    and let the app prompt for re-entry.
+            if (stored.startsWith("sk-")) {
+                Log.d("Saturn", "api_key not encrypted yet, using plain value");
+                return stored;
+            }
+            Log.w("Saturn", "api_key could not be decrypted and is not a plain key; ignoring");
+            return "";
         }
     }
 
