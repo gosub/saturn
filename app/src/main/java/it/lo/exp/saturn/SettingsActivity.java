@@ -2,6 +2,7 @@ package it.lo.exp.saturn;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.InputType;
@@ -22,6 +23,11 @@ public class SettingsActivity extends Activity {
     private Database settingsDb;
 
     @Override
+    protected void attachBaseContext(Context base) {
+        super.attachBaseContext(LocaleHelper.wrap(base));
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
@@ -33,8 +39,8 @@ public class SettingsActivity extends Activity {
         scheduleField = findViewById(R.id.field_schedule);
         languageSpinner   = findViewById(R.id.spinner_language);
 
-        ArrayAdapter<String> langAdapter = new ArrayAdapter<>(this,
-            android.R.layout.simple_spinner_item, new String[]{"English", "Italian"});
+        ArrayAdapter<CharSequence> langAdapter = ArrayAdapter.createFromResource(this,
+            R.array.language_names, android.R.layout.simple_spinner_item);
         langAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         languageSpinner.setAdapter(langAdapter);
 
@@ -71,27 +77,27 @@ public class SettingsActivity extends Activity {
         Button clearHistoryBtn = findViewById(R.id.clear_history_btn);
         clearHistoryBtn.setOnClickListener(v ->
             new AlertDialog.Builder(this)
-                .setTitle("Clear conversation history")
-                .setMessage("This will erase the chat and the context sent to the model. Tasks are not affected.")
-                .setPositiveButton("Clear", (d, w) -> {
+                .setTitle(R.string.clear_history)
+                .setMessage(R.string.clear_history_msg)
+                .setPositiveButton(R.string.clear, (d, w) -> {
                     settingsDb.clearMessages();
-                    Toast.makeText(this, "Conversation cleared", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, R.string.toast_conversation_cleared, Toast.LENGTH_SHORT).show();
                 })
-                .setNegativeButton("Cancel", null)
+                .setNegativeButton(R.string.cancel, null)
                 .show());
 
         settingsDb = Database.get(this);
         Button clearTasksBtn = findViewById(R.id.clear_tasks_btn);
         clearTasksBtn.setOnClickListener(v ->
             new AlertDialog.Builder(this)
-                .setTitle("Clear all tasks")
-                .setMessage("This will permanently delete all tasks and cancel all reminders.")
-                .setPositiveButton("Clear", (d, w) -> {
+                .setTitle(R.string.clear_tasks)
+                .setMessage(R.string.clear_tasks_msg)
+                .setPositiveButton(R.string.clear, (d, w) -> {
                     settingsDb.clearAllTasks();
                     NudgeScheduler.cancel(this);
-                    Toast.makeText(this, "All tasks cleared", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, R.string.toast_tasks_cleared, Toast.LENGTH_SHORT).show();
                 })
-                .setNegativeButton("Cancel", null)
+                .setNegativeButton(R.string.cancel, null)
                 .show());
     }
 
@@ -119,7 +125,7 @@ public class SettingsActivity extends Activity {
             .remove("timezone")
             .apply();
 
-        Toast.makeText(this, "Settings saved", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, R.string.toast_settings_saved, Toast.LENGTH_SHORT).show();
         finish();
     }
 }

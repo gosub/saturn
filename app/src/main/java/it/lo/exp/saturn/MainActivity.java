@@ -47,6 +47,8 @@ public class MainActivity extends Activity {
 
     private Database db;
     private SharedPreferences prefs;
+    private String createdLanguage;
+    private boolean receiverRegistered = false;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     private ChatMessage typingMessage;
@@ -66,12 +68,18 @@ public class MainActivity extends Activity {
     };
 
     @Override
+    protected void attachBaseContext(Context base) {
+        super.attachBaseContext(LocaleHelper.wrap(base));
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         db = Database.get(this);
         prefs = getSharedPreferences("saturn", MODE_PRIVATE);
+        createdLanguage = LocaleHelper.language(this);
         // Obsolete keys from when history/nudges lived in SharedPreferences.
         prefs.edit().remove("conversation_history").remove("pending_nudges").apply();
 
@@ -112,7 +120,7 @@ public class MainActivity extends Activity {
 
         if (KeystoreHelper.readApiKey(prefs).isEmpty()) {
             android.widget.Toast.makeText(this,
-                "Set your OpenRouter API key to start", android.widget.Toast.LENGTH_LONG).show();
+                R.string.set_api_key_toast, android.widget.Toast.LENGTH_LONG).show();
             startActivity(new Intent(this, SettingsActivity.class));
         }
     }
@@ -122,14 +130,14 @@ public class MainActivity extends Activity {
         AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         if (am.canScheduleExactAlarms()) return;
         new AlertDialog.Builder(this)
-            .setTitle("Exact alarms needed")
-            .setMessage("Saturn needs permission to schedule exact alarms so nudges fire on time. Tap OK to open Settings.")
-            .setPositiveButton("OK", (d, w) -> {
+            .setTitle(R.string.exact_alarm_title)
+            .setMessage(R.string.exact_alarm_msg)
+            .setPositiveButton(R.string.ok, (d, w) -> {
                 Intent intent = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
                     Uri.parse("package:" + getPackageName()));
                 startActivity(intent);
             })
-            .setNegativeButton("Not now", null)
+            .setNegativeButton(R.string.not_now, null)
             .show();
     }
 
@@ -144,6 +152,12 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        // The language pref may have changed in Settings; rebuild against the
+        // new locale before touching any views.
+        if (!createdLanguage.equals(LocaleHelper.language(this))) {
+            recreate();
+            return;
+        }
         // The messages table is the single source of truth; NudgeService may
         // have appended nudges while we were backgrounded.
         reloadMessages();
@@ -154,12 +168,16 @@ public class MainActivity extends Activity {
         } else {
             registerReceiver(refreshReceiver, filter);
         }
+        receiverRegistered = true;
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        unregisterReceiver(refreshReceiver);
+        if (receiverRegistered) {
+            unregisterReceiver(refreshReceiver);
+            receiverRegistered = false;
+        }
     }
 
     private void reloadMessages() {
@@ -184,7 +202,7 @@ public class MainActivity extends Activity {
 
         String apiKey = KeystoreHelper.readApiKey(prefs);
         if (apiKey.isEmpty()) {
-            addBotMessage("Please set your OpenRouter API key in Settings.");
+            addBotMessage(getString(R.string.need_api_key_chat));
             return;
         }
 
@@ -227,7 +245,7 @@ public class MainActivity extends Activity {
                     }
 
                     String reply = (resp.reply != null && !resp.reply.isEmpty())
-                        ? resp.reply : "(no reply)";
+                        ? resp.reply : getString(R.string.no_reply);
                     Log.d(TAG, "chat: reply=\"" + reply + "\" actions=" + resp.actions.size());
 
                     final String receiptText = formatReceipts(receipts);
@@ -305,10 +323,10 @@ public class MainActivity extends Activity {
 
     private void showOverflowMenu(View anchor) {
         PopupMenu menu = new PopupMenu(this, anchor);
-        menu.getMenu().add(0, 1, 0, "Today");
-        menu.getMenu().add(0, 2, 1, "This week");
-        menu.getMenu().add(0, 3, 2, "Debug");
-        menu.getMenu().add(0, 4, 3, "Settings");
+        menu.getMenu().add(0, 1, 0, getString(R.string.menu_today));
+        menu.getMenu().add(0, 2, 1, getString(R.string.menu_week));
+        menu.getMenu().add(0, 3, 2, getString(R.string.menu_debug));
+        menu.getMenu().add(0, 4, 3, getString(R.string.menu_settings));
         menu.setOnMenuItemClickListener((MenuItem item) -> {
             switch (item.getItemId()) {
                 case 1: showPeriodSummary(false); return true;
@@ -325,13 +343,13 @@ public class MainActivity extends Activity {
         List<Task> tasks;
         synchronized (db) { tasks = db.getTasks(); }
         if (tasks.isEmpty()) {
-            addSystemMessage("No active tasks.");
+            addSystemMessage(getString(R.string.no_active_tasks));
             return;
         }
-        StringBuilder sb = new StringBuilder("Active tasks (" + tasks.size() + "):\n");
+        StringBuilder sb = new StringBuilder(getString(R.string.active_tasks, tasks.size()) + "\n");
         for (Task t : tasks) {
             String nudge = (t.nextNudgeAt != null && !t.nextNudgeAt.isEmpty())
-                ? t.nextNudgeAt : "not set";
+                ? t.nextNudgeAt : getString(R.string.not_set);
             sb.append("\n  ").append(t.id).append(". ");
             if (t.recurring) sb.append("\u21bb ");
             sb.append(t.description).append("\n     \u2192 ").append(nudge);
@@ -364,9 +382,9 @@ public class MainActivity extends Activity {
         List<Task> tasks;
         synchronized (db) { tasks = db.getTasksForPeriod(from, to); }
 
-        String label = week ? "This week:" : "Today:";
+        String label = getString(week ? R.string.label_week : R.string.label_today);
         if (tasks.isEmpty()) {
-            addSystemMessage(label + "\nNothing scheduled.");
+            addSystemMessage(label + "\n" + getString(R.string.nothing_scheduled));
             return;
         }
         StringBuilder sb = new StringBuilder(label + "\n");
@@ -517,20 +535,20 @@ public class MainActivity extends Activity {
         return ", repeats every " + ActionExecutor.formatInterval(minutes);
     }
 
-    private static String friendlyError(Exception e) {
+    private String friendlyError(Exception e) {
         String msg = e.getMessage();
-        if (msg == null) return "Something went wrong. Try again.";
+        if (msg == null) return getString(R.string.err_generic);
         if (msg.contains("Unable to resolve host") || msg.contains("No address associated"))
-            return "Can't reach the server. Check your internet connection.";
+            return getString(R.string.err_no_network);
         if (msg.contains("timeout") || msg.contains("timed out"))
-            return "The request timed out. Try again.";
+            return getString(R.string.err_timeout);
         if (msg.contains("401") || msg.contains("User not found") || msg.contains("Authentication"))
-            return "API key rejected. Check your key in Settings.";
+            return getString(R.string.err_auth);
         if (msg.contains("invalid JSON from model"))
-            return "The model returned an unexpected response. Try a different model.";
+            return getString(R.string.err_bad_json);
         if (msg.contains("API error"))
-            return "Server error. Try again later.";
-        return "Error: " + msg;
+            return getString(R.string.err_server);
+        return getString(R.string.err_prefix, msg);
     }
 
     private void setInputEnabled(boolean enabled) {

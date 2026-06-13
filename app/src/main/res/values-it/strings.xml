@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Chat screen chrome -->
+    <string name="tasks">Attività</string>
+    <string name="send">Invia</string>
+    <string name="hint_message">Messaggio</string>
+    <string name="empty_hint">Dì a Saturn cosa devi fare.</string>
+
+    <!-- Overflow menu -->
+    <string name="menu_today">Oggi</string>
+    <string name="menu_week">Questa settimana</string>
+    <string name="menu_debug">Debug</string>
+    <string name="menu_settings">Impostazioni</string>
+
+    <!-- First-run / key prompts -->
+    <string name="set_api_key_toast">Imposta la tua chiave API OpenRouter per iniziare</string>
+    <string name="need_api_key_chat">Imposta la tua chiave API OpenRouter nelle Impostazioni.</string>
+
+    <!-- Exact-alarm permission dialog -->
+    <string name="exact_alarm_title">Servono allarmi esatti</string>
+    <string name="exact_alarm_msg">Saturn ha bisogno del permesso di programmare allarmi esatti per inviare i promemoria in orario. Tocca OK per aprire le Impostazioni.</string>
+    <string name="ok">OK</string>
+    <string name="not_now">Non ora</string>
+
+    <!-- Task / period summaries -->
+    <string name="no_active_tasks">Nessuna attività attiva.</string>
+    <string name="active_tasks">Attività attive (%1$d):</string>
+    <string name="not_set">non impostato</string>
+    <string name="label_today">Oggi:</string>
+    <string name="label_week">Questa settimana:</string>
+    <string name="nothing_scheduled">Niente in programma.</string>
+
+    <string name="no_reply">(nessuna risposta)</string>
+    <string name="copied">Copiato</string>
+
+    <!-- Friendly errors -->
+    <string name="err_generic">Qualcosa è andato storto. Riprova.</string>
+    <string name="err_no_network">Impossibile raggiungere il server. Controlla la connessione a Internet.</string>
+    <string name="err_timeout">La richiesta è scaduta. Riprova.</string>
+    <string name="err_auth">Chiave API rifiutata. Controlla la chiave nelle Impostazioni.</string>
+    <string name="err_bad_json">Il modello ha restituito una risposta inattesa. Prova un altro modello.</string>
+    <string name="err_server">Errore del server. Riprova più tardi.</string>
+    <string name="err_prefix">Errore: %1$s</string>
+
+    <!-- Settings screen -->
+    <string name="settings_title">Impostazioni</string>
+    <string name="label_api_key">Chiave API OpenRouter</string>
+    <string name="label_model">Modello</string>
+    <string name="label_language">Lingua</string>
+    <string name="label_schedule">Disponibilità (testo libero)</string>
+    <string name="hint_schedule">es. feriali 9-13 e 15-19</string>
+    <string name="save">Salva</string>
+    <string name="clear_history">Cancella cronologia conversazione</string>
+    <string name="clear_history_msg">Questo cancellerà la chat e il contesto inviato al modello. Le attività non sono interessate.</string>
+    <string name="clear_tasks">Cancella tutte le attività</string>
+    <string name="clear_tasks_msg">Questo eliminerà definitivamente tutte le attività e annullerà tutti i promemoria.</string>
+    <string name="clear">Cancella</string>
+    <string name="cancel">Annulla</string>
+    <string name="toast_settings_saved">Impostazioni salvate</string>
+    <string name="toast_conversation_cleared">Conversazione cancellata</string>
+    <string name="toast_tasks_cleared">Tutte le attività cancellate</string>
+
+</resources>

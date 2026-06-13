@@ -13,7 +13,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Settings"
+            android:text="@string/settings_title"
             android:textColor="#6d2e46"
             android:textSize="22sp"
             android:textStyle="bold"
@@ -22,7 +22,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="OpenRouter API key"
+            android:text="@string/label_api_key"
             android:textColor="#a26769"
             android:textSize="13sp"
             android:paddingBottom="4dp" />
@@ -57,7 +57,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Model"
+            android:text="@string/label_model"
             android:textColor="#a26769"
             android:textSize="13sp"
             android:paddingBottom="4dp" />
@@ -74,7 +74,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Language"
+            android:text="@string/label_language"
             android:textColor="#a26769"
             android:textSize="13sp"
             android:paddingBottom="4dp" />
@@ -89,7 +89,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Schedule (freeform)"
+            android:text="@string/label_schedule"
             android:textColor="#a26769"
             android:textSize="13sp"
             android:paddingBottom="4dp" />
@@ -103,14 +103,14 @@
             android:background="@drawable/input_bg"
             android:padding="12dp"
             android:layout_marginBottom="24dp"
-            android:hint="e.g. weekdays 9-13 and 15-19"
+            android:hint="@string/hint_schedule"
             android:textColorHint="#a26769" />
 
         <Button
             android:id="@+id/save_btn"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Save"
+            android:text="@string/save"
             android:textColor="#ece2d0"
             android:background="@drawable/btn_send_bg"
             android:padding="14dp"
@@ -126,7 +126,7 @@
             android:id="@+id/clear_history_btn"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Clear conversation history"
+            android:text="@string/clear_history"
             android:textColor="#a26769"
             android:background="@drawable/btn_secondary_bg"
             android:padding="14dp"
@@ -136,7 +136,7 @@
             android:id="@+id/clear_tasks_btn"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Clear all tasks"
+            android:text="@string/clear_tasks"
             android:textColor="#a26769"
             android:background="@drawable/btn_secondary_bg"
             android:padding="14dp" />

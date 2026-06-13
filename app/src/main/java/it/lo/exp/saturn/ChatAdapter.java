@@ -87,7 +87,7 @@ public class ChatAdapter extends ArrayAdapter<ChatMessage> {
                     ClipboardManager cm = (ClipboardManager)
                         getContext().getSystemService(Context.CLIPBOARD_SERVICE);
                     cm.setPrimaryClip(ClipData.newPlainText("message", content));
-                    Toast.makeText(getContext(), "Copied", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), R.string.copied, Toast.LENGTH_SHORT).show();
                     return true;
                 });
                 TextView tsView = convertView.findViewById(R.id.message_ts);
