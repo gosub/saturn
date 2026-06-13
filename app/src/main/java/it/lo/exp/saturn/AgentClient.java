@@ -268,6 +268,41 @@ public class AgentClient {
         return sb.toString();
     }
 
+    /** Prompt for the freeform "ask Saturn to change this" edit on the task
+     *  screen: the model sees one task and may act on that id only. */
+    public static String buildEditTaskPrompt(String language, String schedule,
+                                             Task task, long nowMillis) {
+        String now = formatNow(nowMillis);
+        StringBuilder sb = new StringBuilder();
+        sb.append("You are Saturn, editing a single task per the user's instruction.\n");
+        sb.append("Always respond in ").append(langName(language)).append(".\n\n");
+        sb.append("Current time: ").append(now).append("\n");
+        if (schedule != null && !schedule.isEmpty()) {
+            sb.append("User's schedule: ").append(schedule).append("\n");
+        }
+        sb.append("\nThe task being edited:\n");
+        String prefix = task.recurring ? "↻ " : "";
+        String nudge = (task.nextNudgeAt != null && !task.nextNudgeAt.isEmpty())
+            ? task.nextNudgeAt : "not set";
+        sb.append("  ").append(task.id).append(". ").append(prefix).append(task.description)
+          .append(" — next nudge: ").append(nudge);
+        if (task.recurMinutes != null && task.recurMinutes > 0) {
+            sb.append(" (every ").append(task.recurMinutes).append(" min)");
+        }
+        sb.append("\n\n");
+        sb.append("Apply the instruction to THIS task only (id ").append(task.id).append(").\n");
+        sb.append("Respond ONLY with JSON: {\"reply\": \"...\", \"actions\": [...]}\n");
+        sb.append("Available actions (use only id ").append(task.id).append("):\n");
+        sb.append("  {\"type\": \"update_task\",   \"id\": ").append(task.id)
+          .append(", \"description\": \"...\", \"next_nudge_at\": \"ISO8601\", \"recurring\": true, \"recur_minutes\": 1440}\n");
+        sb.append("  {\"type\": \"complete_task\", \"id\": ").append(task.id).append("}\n");
+        sb.append("  {\"type\": \"delete_task\",   \"id\": ").append(task.id).append("}\n");
+        sb.append("  {\"type\": \"snooze_task\",   \"id\": ").append(task.id).append(", \"minutes\": 30}\n");
+        sb.append("next_nudge_at must be ISO 8601 (e.g. 2026-03-21T09:00:00), in the future, respecting the schedule.\n");
+        sb.append("Do not add or touch any other task.\n");
+        return sb.toString();
+    }
+
     // ---- Helpers ----
 
     static String stripCodeFences(String s) {

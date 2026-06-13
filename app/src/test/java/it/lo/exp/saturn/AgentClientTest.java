@@ -88,6 +88,21 @@ public class AgentClientTest {
         assertTrue(p.contains("snooze_task"));
     }
 
+    // ---- buildEditTaskPrompt ----
+
+    @Test
+    public void editPromptScopesToTheSingleTaskId() {
+        Task task = new Task(5, "water the plants", "2026-06-13T18:00:00", true, 1440);
+        String p = AgentClient.buildEditTaskPrompt("en", "weekdays 9-18", task,
+            System.currentTimeMillis());
+        assertTrue(p.contains("↻ water the plants"));
+        assertTrue(p.contains("(every 1440 min)"));
+        // Every offered action is bound to this id.
+        assertTrue(p.contains("\"id\": 5"));
+        assertTrue(p.contains("Do not add or touch any other task."));
+        assertFalse(p.contains("add_task"));
+    }
+
     @Test
     public void nudgePromptRequestsOneNudgePerTaskWithIds() {
         List<Task> due = Arrays.asList(
