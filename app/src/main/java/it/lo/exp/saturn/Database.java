@@ -9,7 +9,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Database extends SQLiteOpenHelper {
+public class Database extends SQLiteOpenHelper implements TaskStore {
 
     private static final String DB_NAME = "saturn.db";
     private static final int DB_VERSION = 3;

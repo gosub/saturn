@@ -1,6 +1,5 @@
 package it.lo.exp.saturn;
 
-import android.content.SharedPreferences;
 import android.util.Log;
 
 import java.text.SimpleDateFormat;
@@ -14,10 +13,18 @@ public class ActionExecutor {
 
     private static final String TAG = "Saturn";
 
+    /** Persists the agent's schedule update. Kept separate from {@link TaskStore}
+     *  so the executor never touches Android's SharedPreferences directly and can
+     *  be tested with a capturing fake. */
+    public interface ScheduleWriter {
+        void setSchedule(String schedule);
+    }
+
     /** Applies the agent's actions and returns one receipt line per action,
      *  describing what actually happened in the database (not what the model
      *  claims in its reply). */
-    public static List<String> execute(List<AgentClient.Action> actions, Database db, SharedPreferences prefs) {
+    public static List<String> execute(List<AgentClient.Action> actions,
+                                       TaskStore db, ScheduleWriter scheduleWriter) {
         List<String> receipts = new ArrayList<>();
         if (actions == null) return receipts;
         for (AgentClient.Action a : actions) {
@@ -108,7 +115,7 @@ public class ActionExecutor {
                 }
                 case "update_schedule":
                     if (a.schedule != null) {
-                        prefs.edit().putString("schedule", a.schedule).apply();
+                        scheduleWriter.setSchedule(a.schedule);
                         receipts.add("✓ schedule updated: " + a.schedule);
                     }
                     break;

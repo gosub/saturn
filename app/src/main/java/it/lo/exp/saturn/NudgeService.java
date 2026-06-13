@@ -218,7 +218,8 @@ public class NudgeService extends Service {
 
             AgentClient.AgentResponse resp = new AgentClient()
                 .chat(apiKey, model, prompt, null, trigger);
-            ActionExecutor.execute(resp.actions, db, prefs);
+            ActionExecutor.execute(resp.actions, db,
+                s -> prefs.edit().putString("schedule", s).apply());
 
             if (resp.nudges != null) {
                 for (AgentClient.Nudge n : resp.nudges) {

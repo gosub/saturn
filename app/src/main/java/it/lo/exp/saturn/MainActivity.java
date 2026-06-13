@@ -221,7 +221,8 @@ public class MainActivity extends Activity {
 
                     List<String> receipts;
                     synchronized (db) {
-                        receipts = ActionExecutor.execute(resp.actions, db, prefs);
+                        receipts = ActionExecutor.execute(resp.actions, db,
+                            s -> prefs.edit().putString("schedule", s).apply());
                         NudgeScheduler.scheduleNext(MainActivity.this, db);
                     }
 
