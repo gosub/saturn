@@ -24,7 +24,15 @@ public class NudgeService extends Service {
 
     private static final String TAG = "Saturn";
     private static final int FOREGROUND_NOTIF_ID = 1;
-    static final int NUDGE_NOTIF_ID = 2;
+    // Summary notification (e.g. "gave up retrying") with no per-task buttons.
+    static final int GIVEUP_NOTIF_ID = 2;
+    // Per-task nudge notifications use a stable id derived from the task id, so
+    // each is posted, updated and cancelled independently of the others.
+    private static final int NUDGE_NOTIF_BASE = 1000;
+
+    static int nudgeNotifId(long taskId) {
+        return NUDGE_NOTIF_BASE + (int) taskId;
+    }
 
     private static final long CYCLE_TIMEOUT_MS = 90_000L;
     private static final int RETRY_MINUTES = 30;
@@ -145,9 +153,11 @@ public class NudgeService extends Service {
         Log.w(TAG, "nudge phase failed (attempt " + fails + ")");
 
         if (fails == 1) {
-            String raw = rawReminderText(due);
-            postNudgeNotification(raw, singleTask(due));
-            saveNudgeMessage(db, raw + "\n(I couldn\u2019t reach the model, this is a raw reminder.)");
+            for (Task t : due) {
+                postTaskNotification(t, t.description);
+            }
+            saveNudgeMessage(db, rawReminderText(due)
+                + "\n(I couldn\u2019t reach the model, this is a raw reminder.)");
         }
 
         if (fails >= MAX_FAILURES) {
@@ -158,7 +168,7 @@ public class NudgeService extends Service {
                 warn.append("\n  \u2022 ").append(t.description);
             }
             warn.append("\nTell me when to remind you again.");
-            postNudgeNotification(warn.toString(), singleTask(due));
+            postSummaryNotification(warn.toString());
             db.saveMessage(ChatMessage.ROLE_BOT, warn.toString(), System.currentTimeMillis());
             notifyMessagesChanged();
         } else {
@@ -194,9 +204,17 @@ public class NudgeService extends Service {
                 .chat(apiKey, model, prompt, null, trigger);
             ActionExecutor.execute(resp.actions, db, prefs);
 
-            if (resp.reply != null && !resp.reply.isEmpty()) {
-                postNudgeNotification(resp.reply, singleTask(due));
-                saveNudgeMessage(db, resp.reply);
+            if (resp.nudges != null) {
+                for (AgentClient.Nudge n : resp.nudges) {
+                    if (n.text == null || n.text.isEmpty()) continue;
+                    Task t = db.getTask(n.id);
+                    if (t == null) {
+                        Log.w(TAG, "nudge for unknown task id " + n.id);
+                        continue;
+                    }
+                    postTaskNotification(t, n.text);
+                    saveNudgeMessage(db, n.text);
+                }
             }
             return true;
         } catch (Exception e) {
@@ -230,33 +248,46 @@ public class NudgeService extends Service {
             .build();
     }
 
-    /** With exactly one due task the actions are unambiguous; otherwise none. */
-    private static Task singleTask(List<Task> due) {
-        return due.size() == 1 ? due.get(0) : null;
-    }
-
-    private void postNudgeNotification(String text, Task actionTask) {
-        Intent openIntent = new Intent(this, MainActivity.class);
-        openIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        PendingIntent pi = PendingIntent.getActivity(this, 0, openIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-
+    /** One actionable notification per task, keyed by a stable per-task id with
+     *  its own Done / Snooze buttons. */
+    private void postTaskNotification(Task task, String text) {
         Notification.Builder builder = new Notification.Builder(this, SaturnApp.CHANNEL_NUDGE)
             .setContentTitle("Saturn")
             .setContentText(text)
             .setStyle(new Notification.BigTextStyle().bigText(text))
             .setSmallIcon(android.R.drawable.ic_popup_reminder)
-            .setContentIntent(pi)
-            .setAutoCancel(true);
-
-        if (actionTask != null) {
-            builder.addAction(buildAction(NudgeActionReceiver.ACTION_DONE, "Done", actionTask.id, 100));
-            builder.addAction(buildAction(NudgeActionReceiver.ACTION_SNOOZE, "Snooze 30m", actionTask.id, 200));
-        }
+            .setContentIntent(openAppIntent())
+            .setAutoCancel(true)
+            .addAction(buildAction(NudgeActionReceiver.ACTION_DONE, "Done",
+                task.id, (int) task.id * 2))
+            .addAction(buildAction(NudgeActionReceiver.ACTION_SNOOZE, "Snooze 30m",
+                task.id, (int) task.id * 2 + 1));
 
         NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        nm.notify(NUDGE_NOTIF_ID, builder.build());
-        Log.d(TAG, "nudge notification posted");
+        nm.notify(nudgeNotifId(task.id), builder.build());
+        Log.d(TAG, "nudge notification posted for task " + task.id);
+    }
+
+    /** A single non-actionable notification (e.g. the give-up summary), since
+     *  there is no longer a per-task reminder to act on. */
+    private void postSummaryNotification(String text) {
+        Notification n = new Notification.Builder(this, SaturnApp.CHANNEL_NUDGE)
+            .setContentTitle("Saturn")
+            .setContentText(text)
+            .setStyle(new Notification.BigTextStyle().bigText(text))
+            .setSmallIcon(android.R.drawable.ic_popup_reminder)
+            .setContentIntent(openAppIntent())
+            .setAutoCancel(true)
+            .build();
+        NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        nm.notify(GIVEUP_NOTIF_ID, n);
+    }
+
+    private PendingIntent openAppIntent() {
+        Intent openIntent = new Intent(this, MainActivity.class);
+        openIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        return PendingIntent.getActivity(this, 0, openIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 
     private Notification.Action buildAction(String action, String label, long taskId, int requestCode) {

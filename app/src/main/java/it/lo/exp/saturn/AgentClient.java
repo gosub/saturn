@@ -50,9 +50,15 @@ public class AgentClient {
         public int minutes; // for snooze_task
     }
 
+    public static class Nudge {
+        public long id;
+        public String text;
+    }
+
     public static class AgentResponse {
-        public String reply;
+        public String reply;          // chat path
         public List<Action> actions;
+        public List<Nudge> nudges;    // nudge path: one phrased nudge per task id
     }
 
     public static class RateLimitException extends IOException {
@@ -157,6 +163,13 @@ public class AgentClient {
                     Action[] arr = GSON.fromJson(obj.get("actions"), Action[].class);
                     if (arr != null) for (Action a : arr) resp.actions.add(a);
                 }
+                if (obj.has("nudges")) {
+                    Nudge[] narr = GSON.fromJson(obj.get("nudges"), Nudge[].class);
+                    if (narr != null) {
+                        resp.nudges = new ArrayList<>();
+                        for (Nudge n : narr) resp.nudges.add(n);
+                    }
+                }
                 return resp;
             } catch (Exception e2) {
                 throw new IOException("invalid JSON from model: " + content);
@@ -242,15 +255,15 @@ public class AgentClient {
             sb.append("  ").append(t.id).append(". ").append(prefix)
               .append(t.description).append(interval).append(late).append("\n");
         }
-        sb.append("\nSend the user a short nudge. One task, one sentence, no fluff.\n");
-        sb.append("If multiple tasks are due, pick the most urgent one.\n");
+        sb.append("\nWrite one short nudge per task above: one sentence each, no fluff.\n");
         sb.append("After nudging:\n");
         sb.append("  - Recurring (\u21bb) with a fixed interval: rescheduled automatically, no action needed.\n");
         sb.append("  - Recurring (\u21bb) without an interval: use update_task to set the next occurrence's next_nudge_at.\n");
         sb.append("  - One-time: use update_task or snooze_task to pick the next reminder time; if you do nothing it is re-nudged in about an hour.\n");
         sb.append("Never complete or delete a task here: only the user can declare a task done.\n");
-        sb.append("If no nudge is appropriate right now, return empty reply.\n\n");
-        sb.append("Respond: {\"reply\": \"...\", \"actions\": [...]}\n");
+        sb.append("If a task needs no nudge right now, omit it from \"nudges\".\n\n");
+        sb.append("Respond: {\"nudges\": [{\"id\": N, \"text\": \"...\"}], \"actions\": [...]}\n");
+        sb.append("Use the numeric id from the list above for each nudge.\n");
         sb.append("Actions: update_task (id, description optional, next_nudge_at optional), snooze_task (id, minutes).\n");
         return sb.toString();
     }

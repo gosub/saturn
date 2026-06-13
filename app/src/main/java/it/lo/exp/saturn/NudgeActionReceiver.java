@@ -18,11 +18,12 @@ public class NudgeActionReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
+        long id = intent.getLongExtra(EXTRA_TASK_ID, -1);
+
         NotificationManager nm = (NotificationManager)
             context.getSystemService(Context.NOTIFICATION_SERVICE);
-        nm.cancel(NudgeService.NUDGE_NOTIF_ID);
+        nm.cancel(NudgeService.nudgeNotifId(id));
 
-        long id = intent.getLongExtra(EXTRA_TASK_ID, -1);
         Database db = Database.get(context);
         Task t = db.getTask(id);
         if (t == null) {

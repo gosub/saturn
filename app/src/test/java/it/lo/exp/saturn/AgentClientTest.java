@@ -87,4 +87,16 @@ public class AgentClientTest {
         assertFalse(p.contains("delete_task ("));
         assertTrue(p.contains("snooze_task"));
     }
+
+    @Test
+    public void nudgePromptRequestsOneNudgePerTaskWithIds() {
+        List<Task> due = Arrays.asList(
+            new Task(1, "buy milk", "2026-06-13T09:00:00", false),
+            new Task(2, "call mom", "2026-06-13T09:00:00", false));
+        String p = AgentClient.buildNudgePrompt("en", "", due, System.currentTimeMillis());
+        assertTrue(p.contains("one short nudge per task"));
+        assertTrue(p.contains("\"nudges\""));
+        // The single-reply schema is gone; each nudge carries its task id.
+        assertFalse(p.contains("\"reply\""));
+    }
 }
