@@ -1,0 +1,9 @@
+# Curated model override for the Saturn benchmark.
+#
+# One OpenRouter model id per line. Lines listed here are ALWAYS tested and
+# appear first in the report; they are merged with auto-discovered free models
+# (zero prompt+completion price, or a ':free' suffix). Comment a line out with
+# '#'. Leave this file empty to test the discovered free roster only.
+#
+# The app's current default:
+openai/gpt-oss-120b:free

@@ -3,3 +3,6 @@ build/
 local.properties
 *.apk
 *.aab
+bench/.venv/
+bench/reports/
+__pycache__/
